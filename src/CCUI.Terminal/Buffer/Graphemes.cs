@@ -73,6 +73,29 @@ public static class Graphemes
         return IsRegionalIndicator(first) && CountRegionalIndicators(cluster) >= 2 ? 2 : width;
     }
 
+    /// <summary>
+    /// True when a cluster should be drawn as a colour emoji: its first code point defaults to emoji presentation, or
+    /// it asks for it with U+FE0F, or it is a flag (regional-indicator pair).
+    /// </summary>
+    public static bool IsEmojiPresentation(string cluster)
+    {
+        if (string.IsNullOrEmpty(cluster))
+        {
+            return false;
+        }
+
+        var first = char.ConvertToUtf32(cluster, 0);
+        if (first < 0x2000)
+        {
+            // Nothing below U+2000 defaults to emoji; keycaps like "1\uFE0F\u20E3" still opt in below.
+            return cluster.Length > 1 && cluster.Contains((char)EmojiPresentationSelector, StringComparison.Ordinal);
+        }
+
+        return EmojiData.HasEmojiPresentation(first)
+            || cluster.Contains((char)EmojiPresentationSelector, StringComparison.Ordinal)
+            || (IsRegionalIndicator(first) && CountRegionalIndicators(cluster) >= 2);
+    }
+
     public static bool IsRegionalIndicator(int codePoint) => codePoint is >= 0x1F1E6 and <= 0x1F1FF;
 
     private static bool IsVariationSelector(int codePoint) => codePoint is >= 0xFE00 and <= 0xFE0F or >= 0xE0100 and <= 0xE01EF;

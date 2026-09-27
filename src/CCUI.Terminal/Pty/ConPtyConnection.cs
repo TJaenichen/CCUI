@@ -13,6 +13,7 @@ namespace CCUI.Terminal.Pty;
 [SupportedOSPlatform("windows")]
 public sealed class ConPtyConnection : ITerminalConnection
 {
+    private const uint StillActive = 259;
     private static readonly TimeSpan DrainTimeout = TimeSpan.FromSeconds(3);
 
     private readonly PtyStartInfo _startInfo;
@@ -132,8 +133,6 @@ public sealed class ConPtyConnection : ITerminalConnection
         _outputRead?.Dispose();
         _process?.Dispose();
     }
-
-    private const uint StillActive = 259;
 
     private SafeProcessHandle StartProcess(IntPtr pseudoConsole)
     {

@@ -333,7 +333,7 @@ public partial class TerminalControl : Control
     private void RenderNow(bool force)
     {
         Interlocked.Exchange(ref _renderScheduled, 0);
-        if (Session is not { } session || _surface is null || !IsLoaded)
+        if (Session is not { } session || _surface is null)
         {
             return;
         }

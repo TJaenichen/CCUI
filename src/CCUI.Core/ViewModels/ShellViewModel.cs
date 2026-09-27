@@ -67,6 +67,9 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
     /// <summary>Provides the window position when the workspace is saved; set by the view.</summary>
     public Func<WindowPlacement?>? WindowProvider { get; set; }
 
+    /// <summary>Applies a saved docking layout once the restored panes exist; set by the view.</summary>
+    public Action<string>? LayoutRestorer { get; set; }
+
     [ObservableProperty]
     public partial SessionPaneViewModel? ActivePane { get; set; }
 
@@ -90,6 +93,16 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
             _autosave = _services.Time.CreateTimer(_ => _services.Dispatcher.Post(SaveWorkspace), null, period, period);
         }
 
+        if (IsDemo)
+        {
+            foreach (var summary in _services.Catalog.Scan(TimeSpan.FromDays(1)))
+            {
+                ActivePane = Launch(new SessionLaunchRequest(NewPaneId(), summary.WorkingDirectory!, summary.SessionId), summary.Title);
+            }
+
+            return;
+        }
+
         if (saved is null)
         {
             return;
@@ -97,8 +110,10 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
 
         IsSessionListVisible = saved.SessionListVisible;
         SessionListWidth = saved.SessionListWidth;
+
+        // Create every pane first so the saved layout can place them, then start the sessions one by one.
         var runningElsewhere = _services.Processes.RunningSessionIds();
-        var first = true;
+        var restored = new List<SessionPaneViewModel>();
         foreach (var pane in saved.Panes)
         {
             if (runningElsewhere.Contains(pane.SessionId))
@@ -107,15 +122,26 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
                 continue;
             }
 
-            if (!first && _workspace.LaunchStaggerMilliseconds > 0)
+            var vm = Launch(new SessionLaunchRequest(pane.PaneId, pane.WorkingDirectory, pane.SessionId), pane.Title, start: false);
+            vm.IsDetailOpen = pane.DetailOpen;
+            vm.DetailHeight = pane.DetailHeight > 0 ? pane.DetailHeight : vm.DetailHeight;
+            restored.Add(vm);
+        }
+
+        if (saved.DockLayout is { Length: > 0 } layout && restored.Count > 0)
+        {
+            LayoutRestorer?.Invoke(layout);
+        }
+
+        ActivePane = restored.LastOrDefault();
+        for (var i = 0; i < restored.Count; i++)
+        {
+            if (i > 0 && _workspace.LaunchStaggerMilliseconds > 0)
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(_workspace.LaunchStaggerMilliseconds), _services.Time).ConfigureAwait(true);
             }
 
-            first = false;
-            var vm = Launch(new SessionLaunchRequest(pane.PaneId, pane.WorkingDirectory, pane.SessionId), pane.Title);
-            vm.IsDetailOpen = pane.DetailOpen;
-            vm.DetailHeight = pane.DetailHeight > 0 ? pane.DetailHeight : vm.DetailHeight;
+            restored[i].Start();
         }
     }
 
@@ -151,16 +177,14 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
 
     public SessionPaneViewModel? FindPane(string paneId) => Panes.FirstOrDefault(p => p.PaneId == paneId);
 
+    /// <summary>Stops the timers and ends every session. Save first (<see cref="SaveWorkspace"/>) while the view can still describe its layout.</summary>
     public async ValueTask DisposeAsync()
     {
         _clock?.Dispose();
         _refresh?.Dispose();
         _autosave?.Dispose();
-        SaveWorkspace();
-        foreach (var pane in Panes.ToList())
-        {
-            await pane.DisposeAsync().ConfigureAwait(false);
-        }
+        // In parallel: each pseudo console may take a moment to drain and close.
+        await Task.WhenAll(Panes.ToList().Select(p => p.DisposeAsync().AsTask())).ConfigureAwait(false);
     }
 
     partial void OnActivePaneChanged(SessionPaneViewModel? oldValue, SessionPaneViewModel? newValue)
@@ -266,7 +290,7 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
 
     private static string NewPaneId() => Guid.NewGuid().ToString("N");
 
-    private SessionPaneViewModel Launch(SessionLaunchRequest request, string? title)
+    private SessionPaneViewModel Launch(SessionLaunchRequest request, string? title, bool start = true)
     {
         var runtime = _services.Launcher.Launch(request);
         var settings = new PaneSettings(
@@ -286,9 +310,13 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         };
 
         Panes.Add(pane);
-        pane.Start();
+        if (start)
+        {
+            pane.Start();
+            SaveWorkspace();
+        }
+
         SessionList.RefreshPanes(FindPaneBySession);
-        SaveWorkspace();
         return pane;
     }
 

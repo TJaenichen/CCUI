@@ -5,6 +5,7 @@
     <PackageVersion Include="Dirkster.AvalonDock" Version="4.74.1" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.74.1" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Windows.Console.ConPTY" Version="1.24.260710001" />
     <PackageVersion Include="System.Management" Version="10.0.12" />
     <!-- Terminal -->
     <PackageVersion Include="Vortice.Direct2D1" Version="3.8.3" />

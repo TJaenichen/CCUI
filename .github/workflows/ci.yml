@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - "src/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "src/**"
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    # To use a runner on your own machine (real GPU, so acrylic shows in the snapshots), register it with the
+    # label "ccui-desktop" and change this line to: runs-on: [self-hosted, windows, ccui-desktop]
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build
+        run: dotnet build src/CCUI.sln -c Release
+
+      - name: Test (all projects, including WPF rendering)
+        run: dotnet test --solution src/CCUI.sln -c Release --no-build
+
+      - name: Upload rendered snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshots
+          path: src/**/TestResults/snapshots/*.png
+          if-no-files-found: ignore

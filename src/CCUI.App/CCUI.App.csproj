@@ -6,10 +6,17 @@
     <AssemblyName>CCUI</AssemblyName>
     <RootNamespace>CCUI.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Program.Main handles the hook relay before WPF starts. -->
+    <StartupObject>CCUI.App.Program</StartupObject>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Ship the current ConPTY (OpenConsole.exe) for x64 and ARM64; see Pty/PseudoConsoleApi.cs. -->
+    <ConptyRequiresx64Host>true</ConptyRequiresx64Host>
+    <ConptyRequiresARM64Host>true</ConptyRequiresARM64Host>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Dirkster.AvalonDock" />
     <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" />
+    <PackageReference Include="Microsoft.Windows.Console.ConPTY" GeneratePathProperty="true" />
     <PackageReference Include="System.Management" />
   </ItemGroup>
   <ItemGroup>
@@ -17,6 +24,9 @@
     <ProjectReference Include="..\CCUI.Terminal.Wpf\CCUI.Terminal.Wpf.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- conpty.dll looks for OpenConsole.exe next to itself, so put each architecture's pair in one folder. -->
+    <None Include="$(PkgMicrosoft_Windows_Console_ConPTY)\runtimes\win-x64\native\conpty.dll" Link="x64\conpty.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="$(PkgMicrosoft_Windows_Console_ConPTY)\runtimes\win-arm64\native\conpty.dll" Link="arm64\conpty.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
     <Content Include="appsettings*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

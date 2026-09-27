@@ -1,0 +1,19 @@
+{
+  "profiles": {
+    "CCUI": {
+      "commandName": "Project"
+    },
+    "CCUI (Demo)": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Demo"
+      }
+    },
+    "CCUI (Development)": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

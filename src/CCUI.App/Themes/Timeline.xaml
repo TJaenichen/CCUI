@@ -1,0 +1,153 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:CCUI.Core.ViewModels;assembly=CCUI.Core">
+    <!--
+        Detail-view entries. Each entry is a one-line "intro" (time, kind, summary, measurement) that unfolds when
+        clicked. WPF picks templates by type, walking up the class hierarchy: tool calls get their own template,
+        every other kind uses the TimelineItemViewModel one.
+    -->
+    <Style x:Key="TimelineIntroStyle" TargetType="ToggleButton">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Bg" Background="Transparent" CornerRadius="4" Padding="6,3">
+                        <ContentPresenter HorizontalAlignment="Stretch" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{StaticResource HoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{StaticResource SelectedBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TimelineBodyStyle" TargetType="TextBox">
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="MaxHeight" Value="420" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="{StaticResource InputBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Margin" Value="0,2,0,4" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrush}" />
+    </Style>
+
+    <Style x:Key="TimelineCodeStyle" TargetType="TextBox" BasedOn="{StaticResource TimelineBodyStyle}">
+        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+    </Style>
+
+    <Style x:Key="TimelineTimeStyle" TargetType="TextBlock">
+        <Setter Property="Width" Value="58" />
+        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="TimelineCaptionStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="Margin" Value="0,4,0,0" />
+    </Style>
+
+    <DataTemplate DataType="{x:Type vm:TimelineItemViewModel}">
+        <StackPanel>
+            <ToggleButton Style="{StaticResource TimelineIntroStyle}" IsChecked="{Binding IsExpanded}" ToolTip="{Binding KindName}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Style="{StaticResource TimelineTimeStyle}" Text="{Binding Time}" />
+                    <TextBlock x:Name="Icon" DockPanel.Dock="Left" Width="20" Style="{StaticResource IconTextStyle}"
+                               Foreground="{StaticResource TextSecondaryBrush}" Text="{StaticResource IconMessage}" />
+                    <Border DockPanel.Dock="Left" Style="{StaticResource ChipStyle}" Margin="0,0,6,0"
+                            Visibility="{Binding IsSubagent, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="agent" FontSize="10" Foreground="{StaticResource AgentBrush}" />
+                    </Border>
+                    <TextBlock DockPanel.Dock="Right" Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="{Binding Metric}" VerticalAlignment="Center" />
+                    <TextBlock x:Name="Intro" Text="{Binding Intro}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                </DockPanel>
+            </ToggleButton>
+            <TextBox Margin="84,0,6,0" Style="{StaticResource TimelineBodyStyle}" Text="{Binding Body, Mode=OneWay}"
+                     Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding KindName}" Value="Prompt">
+                <Setter TargetName="Icon" Property="Text" Value="{StaticResource IconPerson}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                <Setter TargetName="Intro" Property="FontWeight" Value="SemiBold" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding KindName}" Value="Response">
+                <Setter TargetName="Icon" Property="Text" Value="{StaticResource IconMessage}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding KindName}" Value="Thinking">
+                <Setter TargetName="Icon" Property="Text" Value="{StaticResource IconBulb}" />
+                <Setter TargetName="Intro" Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                <Setter TargetName="Intro" Property="FontStyle" Value="Italic" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding KindName}" Value="System">
+                <Setter TargetName="Icon" Property="Text" Value="{StaticResource IconInfo}" />
+                <Setter TargetName="Intro" Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:ToolCallItemViewModel}">
+        <StackPanel>
+            <ToggleButton Style="{StaticResource TimelineIntroStyle}" IsChecked="{Binding IsExpanded}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Style="{StaticResource TimelineTimeStyle}" Text="{Binding Time}" />
+                    <TextBlock x:Name="Icon" DockPanel.Dock="Left" Width="20" Style="{StaticResource IconTextStyle}"
+                               Foreground="{StaticResource WaitingBrush}" Text="{StaticResource IconTool}" />
+                    <Border DockPanel.Dock="Left" Style="{StaticResource ChipStyle}" Margin="0,0,6,0"
+                            Visibility="{Binding IsSubagent, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="agent" FontSize="10" Foreground="{StaticResource AgentBrush}" />
+                    </Border>
+                    <TextBlock DockPanel.Dock="Left" Margin="0,0,8,0" FontWeight="SemiBold" Text="{Binding ToolName}" VerticalAlignment="Center" />
+                    <TextBlock x:Name="Metric" DockPanel.Dock="Right" Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                               Text="{Binding Metric}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Intro}" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="{StaticResource MonoFont}" FontSize="11.5"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                </DockPanel>
+            </ToggleButton>
+            <StackPanel Margin="84,0,6,0" Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Style="{StaticResource TimelineCaptionStyle}" Text="INPUT" />
+                <TextBox Style="{StaticResource TimelineCodeStyle}" Text="{Binding Input, Mode=OneWay}" />
+                <TextBlock Style="{StaticResource TimelineCaptionStyle}" Text="RESULT" Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}" />
+                <TextBox x:Name="Result" Style="{StaticResource TimelineCodeStyle}" Text="{Binding Result, Mode=OneWay}"
+                         Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                <Setter TargetName="Icon" Property="Text" Value="{StaticResource IconStopwatch}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{StaticResource WorkingBrush}" />
+                <Setter TargetName="Metric" Property="Foreground" Value="{StaticResource WorkingBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsError}" Value="True">
+                <Setter TargetName="Icon" Property="Text" Value="{StaticResource IconError}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                <Setter TargetName="Result" Property="Foreground" Value="{StaticResource ErrorBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding ToolName}" Value="Task">
+                <Setter TargetName="Icon" Property="Text" Value="{StaticResource IconRobot}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{StaticResource AgentBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding ToolName}" Value="Agent">
+                <Setter TargetName="Icon" Property="Text" Value="{StaticResource IconRobot}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{StaticResource AgentBrush}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+</ResourceDictionary>

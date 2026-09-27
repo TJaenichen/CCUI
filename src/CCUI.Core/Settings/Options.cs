@@ -180,6 +180,9 @@ public sealed class KeyBindingOptions
     public string ToggleSessionList { get; set; } = "Ctrl+Shift+B";
 
     public string FocusSessionList { get; set; } = "Ctrl+Shift+E";
+
+    /// <summary>Arranges all docked sessions in a grid.</summary>
+    public string TileLayout { get; set; } = "Ctrl+Shift+G";
 }
 
 /// <summary>Saving and restoring open sessions. Section "Workspace".</summary>

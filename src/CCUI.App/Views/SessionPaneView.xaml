@@ -9,6 +9,9 @@
              xmlns:controls="clr-namespace:CCUI.App.Controls"
              xmlns:views="clr-namespace:CCUI.App.Views"
              x:Name="Root"
+             Foreground="{StaticResource TextPrimaryBrush}"
+             FontFamily="{StaticResource UiFont}"
+             FontSize="12.5"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SessionPaneViewModel}"
              d:DesignHeight="500" d:DesignWidth="800">
@@ -58,62 +61,70 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Header: state, title, stats, activity meters, actions. -->
-            <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" CornerRadius="6,6,0,0" Padding="10,6,6,6">
+            <!-- Header: state and title with actions, then folder/branch, stats and activity meters. -->
+            <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" CornerRadius="6,6,0,0" Padding="10,5,6,6">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <DockPanel>
-                            <Ellipse DockPanel.Dock="Left" Margin="0,0,8,0" Style="{StaticResource StateDotStyle}" />
-                            <Border DockPanel.Dock="Right" Style="{StaticResource ChipStyle}" Background="#33E5C07B"
-                                    Visibility="{Binding NeedsAttention, Converter={StaticResource BoolToVisibility}}"
-                                    ToolTip="{Binding AttentionMessage}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Style="{StaticResource IconTextStyle}" FontSize="10" Foreground="{StaticResource AttentionBrush}" Text="{StaticResource IconBell}" />
-                                    <TextBlock Margin="4,0,0,0" FontSize="11" Foreground="{StaticResource AttentionBrush}" Text="needs you" />
-                                </StackPanel>
-                            </Border>
-                            <Border DockPanel.Dock="Right" Style="{StaticResource ChipStyle}" ToolTip="{Binding WorkingDirectory}">
-                                <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}">
-                                    <Run Text="{Binding Project, Mode=OneWay}" /><Run Text="{Binding GitBranch, StringFormat=' · ⎇ {0}', Mode=OneWay}" />
-                                </TextBlock>
-                            </Border>
-                            <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                       ToolTip="{Binding SessionId}" />
-                        </DockPanel>
+                    <DockPanel Grid.Row="0" Grid.Column="0">
+                        <Ellipse DockPanel.Dock="Left" Margin="0,0,8,0" Style="{StaticResource StateDotStyle}" />
+                        <Border DockPanel.Dock="Right" Style="{StaticResource ChipStyle}" Background="#33E5C07B"
+                                Visibility="{Binding NeedsAttention, Converter={StaticResource BoolToVisibility}}"
+                                ToolTip="{Binding AttentionMessage}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource IconTextStyle}" FontSize="10" Foreground="{StaticResource AttentionBrush}" Text="{StaticResource IconBell}" />
+                                <TextBlock Margin="4,0,0,0" FontSize="11" Foreground="{StaticResource AttentionBrush}" Text="needs you" />
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                   ToolTip="{Binding SessionId}" />
+                    </DockPanel>
 
-                        <WrapPanel Margin="17,4,0,0" DataContext="{Binding Stats}">
-                            <TextBlock Style="{StaticResource StatTextStyle}" Text="{Binding Model}" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <StackPanel Orientation="Horizontal" Margin="0,0,12,0" ToolTip="This turn / all turns">
-                                <TextBlock x:Name="TurnIcon" Style="{StaticResource IconTextStyle}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="{StaticResource IconStopwatch}" />
-                                <TextBlock Style="{StaticResource StatTextStyle}" Margin="4,0,0,0" Text="{Binding TurnTime}" />
-                                <TextBlock Style="{StaticResource StatTextStyle}" Margin="4,0,0,0" Foreground="{StaticResource TextMutedBrush}" Text="{Binding TotalTime, StringFormat='Σ {0}'}" />
-                            </StackPanel>
-                            <TextBlock Style="{StaticResource StatTextStyle}" ToolTip="Tokens in (fresh + cache writes) / out / cache reads">
-                                <Run Text="↑" Foreground="{StaticResource TextMutedBrush}" /><Run Text="{Binding TokensIn, Mode=OneWay}" />
-                                <Run Text=" ↓" Foreground="{StaticResource TextMutedBrush}" /><Run Text="{Binding TokensOut, Mode=OneWay}" />
-                                <Run Text=" ⟲" Foreground="{StaticResource TextMutedBrush}" /><Run Text="{Binding CacheRead, Mode=OneWay}" />
-                            </TextBlock>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,12,0" ToolTip="Context window used by the latest request">
-                                <ProgressBar Width="46" Style="{StaticResource ThinBarStyle}" Value="{Binding ContextPercent, Mode=OneWay}" VerticalAlignment="Center" />
-                                <TextBlock Style="{StaticResource StatTextStyle}" Margin="6,0,0,0" Text="{Binding ContextText}" />
-                            </StackPanel>
-                            <TextBlock Style="{StaticResource StatTextStyle}" Margin="0,0,4,0" ToolTip="Tool calls">
-                                <Run Text="{Binding ToolCalls, Mode=OneWay}" /><Run Text=" tools" Foreground="{StaticResource TextMutedBrush}" />
-                            </TextBlock>
-                            <TextBlock Style="{StaticResource StatTextStyle}" Foreground="{StaticResource ErrorBrush}" ToolTip="Failed tool calls"
-                                       Text="{Binding ToolErrors, StringFormat='{}{0} failed'}"
-                                       Visibility="{Binding ToolErrors, Converter={StaticResource VisibleWhen}}" />
-                        </WrapPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="8,-2,0,0">
+                        <ToggleButton Style="{StaticResource IconToggleStyle}" IsChecked="{Binding IsDetailOpen}" Content="{StaticResource IconDetails}" ToolTip="Details" />
+                        <Button Style="{StaticResource IconButtonStyle}" Command="{Binding RestartCommand}" Content="{StaticResource IconRefresh}" ToolTip="Resume the session"
+                                Visibility="{Binding HasExited, Converter={StaticResource BoolToVisibility}}" />
+                        <Button Style="{StaticResource IconButtonStyle}" Command="{Binding CloseCommand}" Content="{StaticResource IconClose}" ToolTip="Close" />
                     </StackPanel>
 
+                    <WrapPanel Grid.Row="1" Grid.Column="0" Margin="17,3,0,0">
+                        <Border Style="{StaticResource ChipStyle}" Margin="0,0,10,0" ToolTip="{Binding WorkingDirectory}">
+                            <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}">
+                                <Run Text="{Binding Project, Mode=OneWay}" /><Run Text="{Binding GitBranch, StringFormat=' · ⎇ {0}', TargetNullValue='', Mode=OneWay}" />
+                            </TextBlock>
+                        </Border>
+                        <TextBlock DataContext="{Binding Stats}" Style="{StaticResource StatTextStyle}" Text="{Binding Model}" Foreground="{StaticResource TextPrimaryBrush}" />
+                        <StackPanel DataContext="{Binding Stats}" Orientation="Horizontal" Margin="0,0,12,0" ToolTip="This turn / all turns">
+                            <TextBlock Style="{StaticResource IconTextStyle}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="{StaticResource IconStopwatch}" />
+                            <TextBlock Style="{StaticResource StatTextStyle}" Margin="4,0,0,0" Text="{Binding TurnTime}" />
+                            <TextBlock Style="{StaticResource StatTextStyle}" Margin="4,0,0,0" Foreground="{StaticResource TextMutedBrush}" Text="{Binding TotalTime, StringFormat='Σ {0}'}" />
+                        </StackPanel>
+                        <TextBlock DataContext="{Binding Stats}" Style="{StaticResource StatTextStyle}" ToolTip="Tokens in (fresh + cache writes) / out / cache reads">
+                            <Run Text="↑" Foreground="{StaticResource TextMutedBrush}" /><Run Text="{Binding TokensIn, Mode=OneWay}" />
+                            <Run Text=" ↓" Foreground="{StaticResource TextMutedBrush}" /><Run Text="{Binding TokensOut, Mode=OneWay}" />
+                            <Run Text=" ⟲" Foreground="{StaticResource TextMutedBrush}" /><Run Text="{Binding CacheRead, Mode=OneWay}" />
+                        </TextBlock>
+                        <StackPanel DataContext="{Binding Stats}" Orientation="Horizontal" Margin="0,0,12,0" ToolTip="Context window used by the latest request">
+                            <ProgressBar Width="46" Style="{StaticResource ThinBarStyle}" Value="{Binding ContextPercent, Mode=OneWay}" VerticalAlignment="Center" />
+                            <TextBlock Style="{StaticResource StatTextStyle}" Margin="6,0,0,0" Text="{Binding ContextText}" />
+                        </StackPanel>
+                        <TextBlock DataContext="{Binding Stats}" Style="{StaticResource StatTextStyle}" Margin="0,0,4,0" ToolTip="Tool calls">
+                            <Run Text="{Binding ToolCalls, Mode=OneWay}" /><Run Text=" tools" Foreground="{StaticResource TextMutedBrush}" />
+                        </TextBlock>
+                        <TextBlock DataContext="{Binding Stats}" Style="{StaticResource StatTextStyle}" Foreground="{StaticResource ErrorBrush}" ToolTip="Failed tool calls"
+                                   Text="{Binding ToolErrors, StringFormat='{}{0} failed'}"
+                                   Visibility="{Binding ToolErrors, Converter={StaticResource VisibleWhen}}" />
+                    </WrapPanel>
+
                     <!-- Activity: to the model (prompts, tool results) and from it (text, thinking, tool calls). -->
-                    <Grid Grid.Column="1" Width="120" VerticalAlignment="Center" Margin="4,0,8,0">
+                    <Grid Grid.Row="1" Grid.Column="1" Width="96" VerticalAlignment="Center" Margin="8,3,8,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -129,13 +140,6 @@
                         <controls:LevelMeter Grid.Row="1" Grid.Column="1" Height="6" Margin="5,4,0,0" Level="{Binding ReceivedLevel}"
                                              BarBrush="{StaticResource MeterBrush}" TrackBrush="{StaticResource MeterTrackBrush}" PeakBrush="{StaticResource MeterPeakBrush}" />
                     </Grid>
-
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-                        <ToggleButton Style="{StaticResource IconToggleStyle}" IsChecked="{Binding IsDetailOpen}" Content="{StaticResource IconDetails}" ToolTip="Details" />
-                        <Button Style="{StaticResource IconButtonStyle}" Command="{Binding RestartCommand}" Content="{StaticResource IconRefresh}" ToolTip="Resume the session"
-                                Visibility="{Binding HasExited, Converter={StaticResource BoolToVisibility}}" />
-                        <Button Style="{StaticResource IconButtonStyle}" Command="{Binding CloseCommand}" Content="{StaticResource IconClose}" ToolTip="Close" />
-                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -181,7 +185,7 @@
                     <Button DockPanel.Dock="Right" Style="{StaticResource PillButtonStyle}" Margin="6,0,0,0" Content="Close" Command="{Binding CloseCommand}" />
                     <Button DockPanel.Dock="Right" Style="{StaticResource PillButtonStyle}" Content="Resume" Command="{Binding RestartCommand}" />
                     <TextBlock VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}">
-                        <Run Text="Session ended" /><Run Text="{Binding ExitCode, StringFormat=' (exit code {0})', Mode=OneWay}" /><Run Text=". It can be resumed with its history." />
+                        <Run Text="Session ended" /><Run Text="{Binding ExitCode, StringFormat=' (exit code {0})', TargetNullValue='', Mode=OneWay}" /><Run Text=". It can be resumed with its history." />
                     </TextBlock>
                 </DockPanel>
             </Border>

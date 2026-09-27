@@ -58,6 +58,27 @@ public sealed partial class SessionListItemViewModel(SessionSummary summary) : O
         }.Where(s => s is not null));
 
     public void Tick(DateTimeOffset now) => LastActiveText = Format.Relative(LastActive, now);
+
+    partial void OnPaneChanged(SessionPaneViewModel? oldValue, SessionPaneViewModel? newValue)
+    {
+        if (oldValue is not null)
+        {
+            oldValue.PropertyChanged -= OnPanePropertyChanged;
+        }
+
+        if (newValue is not null)
+        {
+            newValue.PropertyChanged += OnPanePropertyChanged;
+        }
+    }
+
+    private void OnPanePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SessionPaneViewModel.Title))
+        {
+            OnPropertyChanged(nameof(Name));
+        }
+    }
 }
 
 /// <summary>The session list: recent sessions, newest first, filterable.</summary>
@@ -74,7 +95,12 @@ public sealed partial class SessionListViewModel : ObservableObject
     public partial SessionListItemViewModel? SelectedItem { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(KilledAtRebootText))]
     public partial int KilledAtRebootCount { get; set; }
+
+    public string KilledAtRebootText => KilledAtRebootCount == 1
+        ? "1 session was killed by the last reboot."
+        : $"{KilledAtRebootCount} sessions were killed by the last reboot.";
 
     /// <summary>The user wants to open a session.</summary>
     public event EventHandler<SessionListItemViewModel>? OpenRequested;

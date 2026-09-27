@@ -161,7 +161,45 @@ internal sealed class ClaudeTuiPainter
         lines.Add($"  Context {Bar(state.ContextPercent, BarGreen)} {state.ContextPercent}% | Usage {Bar(state.UsagePercent, BarBlue)} {state.UsagePercent}%");
         var agents = state.RunningAgents > 0 ? $" · {state.RunningAgents} agent{(state.RunningAgents == 1 ? string.Empty : "s")} running" : string.Empty;
         lines.Add($"  {Pink}⏵⏵ bypass permissions on{Reset}{Gray}{agents} · ← for agents{Reset}");
-        return (lines, inputLine, inputColumn);
+
+        // Never let a line wrap: the redraw moves the cursor by line count, as Claude Code's renderer does.
+        return ([.. lines.Select(line => Fit(line, Width - 1))], inputLine, Math.Min(inputColumn, Width - 1));
+    }
+
+    /// <summary>Cuts a line with escape sequences to <paramref name="columns"/> display columns.</summary>
+    public static string Fit(string line, int columns)
+    {
+        var sb = new StringBuilder(line.Length);
+        var width = 0;
+        var i = 0;
+        while (i < line.Length)
+        {
+            if (line[i] == '\e')
+            {
+                var start = i++;
+                while (i < line.Length && !char.IsAsciiLetter(line[i]))
+                {
+                    i++;
+                }
+
+                i = Math.Min(i + 1, line.Length);
+                sb.Append(line, start, i - start);
+                continue;
+            }
+
+            var length = char.IsSurrogatePair(line, i) ? 2 : 1;
+            var cellWidth = Math.Max(0, Graphemes.Width(char.ConvertToUtf32(line, i)));
+            if (width + cellWidth > columns)
+            {
+                break;
+            }
+
+            sb.Append(line, i, length);
+            width += cellWidth;
+            i += length;
+        }
+
+        return sb.Append(Reset).ToString();
     }
 
     public static int DisplayWidth(string text)

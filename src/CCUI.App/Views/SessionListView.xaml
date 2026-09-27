@@ -5,6 +5,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CCUI.Core.ViewModels;assembly=CCUI.Core"
              xmlns:claude="clr-namespace:CCUI.Core.Claude;assembly=CCUI.Core"
+             Foreground="{StaticResource TextPrimaryBrush}"
+             FontFamily="{StaticResource UiFont}"
+             FontSize="12.5"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:ShellViewModel}"
              d:DesignHeight="700" d:DesignWidth="320">
@@ -55,7 +58,7 @@
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                         <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Project}" />
-                        <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="{Binding Branch, StringFormat=' · ⎇ {0}'}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="{Binding Branch, StringFormat=' · ⎇ {0}', TargetNullValue=''}" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <WrapPanel Margin="-4,3,0,0">
                         <Border Style="{StaticResource ChipStyle}" Background="#33E5C07B" ToolTip="Killed by the last reboot"
@@ -67,7 +70,7 @@
                             <TextBlock FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Text="running elsewhere" />
                         </Border>
                         <Border Style="{StaticResource ChipStyle}" Background="#33E5C07B" ToolTip="{Binding Pane.AttentionMessage}"
-                                Visibility="{Binding Pane.NeedsAttention, Converter={StaticResource VisibleWhen}}">
+                                Visibility="{Binding Pane.NeedsAttention, Converter={StaticResource VisibleWhen}, FallbackValue=Collapsed}">
                             <TextBlock FontSize="10" Foreground="{StaticResource AttentionBrush}" Text="needs you" />
                         </Border>
                     </WrapPanel>
@@ -101,9 +104,8 @@
                     Visibility="{Binding SessionList.KilledAtRebootCount, Converter={StaticResource VisibleWhen}}">
                 <DockPanel>
                     <Button DockPanel.Dock="Right" Style="{StaticResource PillButtonStyle}" Content="Reopen" Command="{Binding ReopenKilledSessionsCommand}" />
-                    <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource AttentionBrush}">
-                        <Run Text="{Binding SessionList.KilledAtRebootCount, Mode=OneWay}" /><Run Text=" sessions were killed by the last reboot." />
-                    </TextBlock>
+                    <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource AttentionBrush}"
+                               Text="{Binding SessionList.KilledAtRebootText}" />
                 </DockPanel>
             </Border>
 

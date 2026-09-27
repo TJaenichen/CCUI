@@ -5,6 +5,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CCUI.Core.ViewModels;assembly=CCUI.Core"
              xmlns:controls="clr-namespace:CCUI.App.Controls"
+             Foreground="{StaticResource TextPrimaryBrush}"
+             FontFamily="{StaticResource UiFont}"
+             FontSize="12.5"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SessionDetailViewModel}"
              d:DesignHeight="260" d:DesignWidth="700">

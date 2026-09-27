@@ -48,6 +48,18 @@ public sealed class DemoTests
     }
 
     [Fact]
+    public void NarrowPanesDoNotWrap()
+    {
+        var painter = new ClaudeTuiPainter { Width = 44 };
+        var (lines, _, inputColumn) = painter.Bottom(new DemoBottomState("Delegating", 1, TimeSpan.FromSeconds(3), 900, "a long typed prompt that is wider than the pane", "homelab", 12_345, 30, 16, 2));
+        var term = new TerminalEmulator(44, 20);
+        term.Feed(string.Join("\r\n", lines));
+
+        Assert.All(Enumerable.Range(0, term.Rows), r => Assert.False(term.Buffer[r].IsWrapped));
+        Assert.True(inputColumn < 44);
+    }
+
+    [Fact]
     public void CatalogIsStable()
     {
         var catalog = new DemoSessionCatalog(Options.Create(new DemoOptions { Sessions = 3 }), TimeProvider.System);

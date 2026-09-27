@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- WPF terminal control that renders a CCUI.Terminal emulator. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Vortice.Direct2D1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CCUI.Terminal\CCUI.Terminal.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="CCUI.App.Tests" />
+  </ItemGroup>
+</Project>

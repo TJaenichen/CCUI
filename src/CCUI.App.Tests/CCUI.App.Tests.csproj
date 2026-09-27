@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Windows-only: renders WPF controls and templates off-screen and compares PNG snapshots. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CCUI.App\CCUI.App.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Snapshots\**\*.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

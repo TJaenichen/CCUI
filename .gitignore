@@ -1,0 +1,13 @@
+# Build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.swp
+TestResults/
+*.received.png
+artifacts/
+
+# Local tooling
+.dotnet/

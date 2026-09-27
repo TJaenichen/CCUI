@@ -22,6 +22,7 @@ public partial class TerminalControl
     private (long Line, int Column)? _selectionEnd;
     private SelectionUnit _selectionUnit;
     private bool _selecting;
+    private int _wheelDelta;
 
     public bool HasSelection => _selectionStart is not null && _selectionEnd is not null;
 
@@ -131,10 +132,14 @@ public partial class TerminalControl
             return;
         }
 
-        var notches = e.Delta / 120;
+        // Precision touchpads send many small deltas; add them up and act on whole notches.
+        _wheelDelta += e.Delta;
+        var notches = _wheelDelta / 120;
+        _wheelDelta -= notches * 120;
         if (notches == 0)
         {
-            notches = Math.Sign(e.Delta);
+            e.Handled = true;
+            return;
         }
 
         var modes = session.Emulator.Modes;

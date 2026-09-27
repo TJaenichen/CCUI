@@ -55,12 +55,14 @@ public partial class TerminalControl
             return;
         }
 
-        var key = e.Key switch
+        // Keys consumed by an input method (CJK composition) are not for the process; the committed text
+        // arrives through OnTextInput.
+        if (e.Key == Key.ImeProcessed)
         {
-            Key.System => e.SystemKey,
-            Key.ImeProcessed => e.ImeProcessedKey,
-            _ => e.Key,
-        };
+            return;
+        }
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
         var modifiers = Keyboard.Modifiers;
 
         if (key is Key.DeadCharProcessed or Key.LeftShift or Key.RightShift or Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin)

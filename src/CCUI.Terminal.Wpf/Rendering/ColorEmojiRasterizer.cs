@@ -29,6 +29,12 @@ internal sealed class ColorEmojiRasterizer : IDisposable
 
     public ColorEmojiRasterizer(string fontFamily = "Segoe UI Emoji") => _fontFamily = fontFamily;
 
+    /// <summary>
+    /// One rasteriser (and bitmap cache) for all terminals. WPF renders on one UI thread, so no locking is needed;
+    /// it lives as long as the process, which also spares re-creating it when a docked pane is moved.
+    /// </summary>
+    public static ColorEmojiRasterizer Shared { get; } = new();
+
     public bool IsAvailable => !_failed;
 
     /// <summary>The emoji as a bitmap of exactly <paramref name="pixelWidth"/> x <paramref name="pixelHeight"/> device pixels, or null.</summary>

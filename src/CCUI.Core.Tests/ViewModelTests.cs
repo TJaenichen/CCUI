@@ -105,6 +105,17 @@ public sealed class ViewModelTests
     }
 
     [Fact]
+    public async Task OpeningAnAgentRowDoesNothing()
+    {
+        var shell = Shell();
+
+        shell.OpenSessionCommand.Execute(new AgentViewModel(new RunningAgent("t1", "Find things", "Explore", _time.GetUtcNow())));
+
+        Assert.Empty(shell.Panes);
+        await shell.DisposeAsync();
+    }
+
+    [Fact]
     public async Task RunningElsewhereAsksFirst()
     {
         var shell = Shell();

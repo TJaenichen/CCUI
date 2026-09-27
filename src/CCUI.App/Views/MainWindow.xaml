@@ -45,9 +45,17 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
-        <!-- Tint over the acrylic/mica backdrop (or an opaque colour where there is none). -->
-        <Rectangle Fill="{DynamicResource WindowTintBrush}" />
+    <Grid x:Name="Root">
+        <!-- Tint over the acrylic/mica backdrop. The caption buttons' corner stays clear: DWM draws the buttons
+             underneath the window content, so anything painted there would hide them. -->
+        <Grid IsHitTestVisible="False">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="38" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Rectangle Fill="{DynamicResource WindowTintBrush}" Margin="0,0,140,0" />
+            <Rectangle Grid.Row="1" Fill="{DynamicResource WindowTintBrush}" />
+        </Grid>
 
         <Grid>
             <Grid.RowDefinitions>

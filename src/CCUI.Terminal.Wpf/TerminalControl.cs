@@ -66,7 +66,6 @@ public partial class TerminalControl : Control
     private readonly DispatcherTimer _blinkTimer;
     private readonly DispatcherTimer _resizeTimer;
     private readonly DispatcherTimer _syncTimer;
-    private ColorEmojiRasterizer? _emoji;
     private TerminalSurface? _surface;
     private ScrollBar? _scrollBar;
     private int _renderScheduled;
@@ -121,10 +120,9 @@ public partial class TerminalControl : Control
         Unloaded += (_, _) =>
         {
             _blinkTimer.Stop();
-            _emoji?.Dispose();
-            _emoji = null;
-            _rendererDirty = true;
+            RemoveKeyMenuHook();
         };
+        Loaded += (_, _) => AddKeyMenuHook();
     }
 
     public TerminalSession? Session
@@ -269,6 +267,9 @@ public partial class TerminalControl : Control
         base.OnDpiChanged(oldDpi, newDpi);
         _rendererDirty = true;
         ScheduleRender();
+
+        // The cell size is snapped to device pixels, so a new DPI can change how many rows and columns fit.
+        ScheduleResize();
     }
 
     private static void OnSessionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -383,9 +384,8 @@ public partial class TerminalControl : Control
         var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         var fonts = new FontFallback(FontFamily, FontWeight, FallbackFontFamilies.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
         var metrics = CellMetrics.From(fonts.Primary, FontSize, dpi, LineHeight);
-        _emoji ??= new ColorEmojiRasterizer();
         var settings = new RenderSettings(TerminalPalette.FromScheme(ColorScheme), IntenseTextStyle, UseBuiltinGlyphs, UseColorEmoji);
-        _surface.Renderer = new RowRenderer(metrics, fonts, _emoji, settings);
+        _surface.Renderer = new RowRenderer(metrics, fonts, ColorEmojiRasterizer.Shared, settings);
         if (Session is { } session)
         {
             session.Emulator.CellPixelSize = ((int)Math.Round(metrics.Width * dpi), (int)Math.Round(metrics.Height * dpi));

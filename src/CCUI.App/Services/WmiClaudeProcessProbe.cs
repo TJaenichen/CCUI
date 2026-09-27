@@ -39,9 +39,9 @@ public sealed partial class WmiClaudeProcessProbe(TimeProvider time) : IClaudePr
                     }
                 }
             }
-            catch (ManagementException)
+            catch (Exception ex) when (ex is ManagementException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
             {
-                // WMI unavailable: treat as "nothing running elsewhere".
+                // WMI unavailable (e.g. the service is restarting): treat as "nothing running elsewhere".
             }
 
             _cached = ids;

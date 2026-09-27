@@ -49,8 +49,9 @@ public partial class MainWindow : Window
         {
             if (!WindowBackdrop.TryApply(this, appearance.Value.Backdrop))
             {
-                // No system backdrop (Windows 10, or turned off): paint an opaque base under the tint.
-                Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1A));
+                // No system backdrop (Windows 10, or turned off): make the tint opaque. The window background stays
+                // transparent so the caption buttons remain visible.
+                Resources["WindowTintBrush"] = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1A));
             }
 
             if (_saved?.Window?.Maximized == true)
@@ -67,6 +68,7 @@ public partial class MainWindow : Window
             }
         };
         Closing += OnClosing;
+        StateChanged += (_, _) => Root.Margin = WindowState == WindowState.Maximized ? MaximizedInset() : default;
     }
 
     /// <summary>Arranges all docked sessions in a grid: columns of up to three panes, side by side.</summary>
@@ -163,6 +165,23 @@ public partial class MainWindow : Window
         Width = Math.Max(MinWidth, placement.Width);
         Height = Math.Max(MinHeight, placement.Height);
     }
+
+    /// <summary>
+    /// A maximized WindowChrome window extends past the monitor by its resize border plus the padded border;
+    /// inset the content by that much so nothing is cut off.
+    /// </summary>
+    private Thickness MaximizedInset()
+    {
+        var dpi = VisualTreeHelper.GetDpi(this).DpiScaleX;
+        var padded = GetSystemMetrics(SmCxPaddedBorder) / dpi;
+        var frame = SystemParameters.WindowResizeBorderThickness;
+        return new Thickness(frame.Left + padded, frame.Top + padded, frame.Right + padded, frame.Bottom + padded);
+    }
+
+    private const int SmCxPaddedBorder = 92;
+
+    [System.Runtime.InteropServices.LibraryImport("user32.dll")]
+    private static partial int GetSystemMetrics(int index);
 
     private WindowPlacement CapturePlacement()
     {

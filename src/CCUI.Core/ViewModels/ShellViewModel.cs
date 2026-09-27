@@ -210,10 +210,11 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         }
     }
 
+    /// <summary>Opens (or activates) a session. Takes any parameter: tree rows can also be running agents.</summary>
     [RelayCommand]
-    private void OpenSession(SessionListItemViewModel? item)
+    private void OpenSession(object? parameter)
     {
-        if (item is null)
+        if (parameter is not SessionListItemViewModel item)
         {
             return;
         }
@@ -356,8 +357,9 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
                 SessionList.Update(summaries, killed, _runningElsewhere, FindPaneBySession, _services.Time.GetUtcNow());
             });
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex)
         {
+            // This runs on a timer thread, where an exception would end the process; the next scan will retry.
             _services.Logger.LogWarning(ex, "Could not scan sessions");
         }
         finally

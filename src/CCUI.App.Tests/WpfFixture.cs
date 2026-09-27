@@ -52,11 +52,11 @@ public sealed class WpfFixture : IDisposable
     public Task Run(Func<Task> action) => Dispatcher.InvokeAsync(action).Task.Unwrap();
 
     /// <summary>Lets queued layout, render and input work run (call on the UI thread).</summary>
-    public static async Task Settle(int milliseconds = 0)
+    public static async Task Settle(int milliseconds, CancellationToken cancel)
     {
         if (milliseconds > 0)
         {
-            await Task.Delay(milliseconds);
+            await Task.Delay(milliseconds, cancel);
         }
 
         await Dispatcher.CurrentDispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);

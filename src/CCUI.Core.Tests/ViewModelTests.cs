@@ -214,9 +214,39 @@ public sealed class ViewModelTests
             Requests.Add(request);
             var feed = new FakeFeed();
             Feeds.Add(feed);
-            var terminal = new TerminalSession(new MessageConnection("fake"), 80, 24, 100);
+            var terminal = new TerminalSession(new OpenConnection(), 80, 24, 100);
             return new ClaudeSessionRuntime(request.ResumeSessionId ?? "new", terminal, feed);
         }
+    }
+
+    /// <summary>A process that never exits and ignores input.</summary>
+    private sealed class OpenConnection : ITerminalConnection
+    {
+        public event EventHandler<ReadOnlyMemory<byte>>? DataReceived
+        {
+            add { }
+            remove { }
+        }
+
+        public event EventHandler<int?>? Exited
+        {
+            add { }
+            remove { }
+        }
+
+        public void Start(int columns, int rows)
+        {
+        }
+
+        public void Write(ReadOnlySpan<byte> data)
+        {
+        }
+
+        public void Resize(int columns, int rows)
+        {
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private sealed class FakeFeed : ITranscriptFeed

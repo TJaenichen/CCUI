@@ -10,7 +10,7 @@ namespace CCUI.App.Tests;
 [Collection("Wpf")]
 public sealed class MainWindowTests(WpfFixture wpf)
 {
-    [Fact]
+    [Fact(Timeout = 60_000)]
     public Task DemoWindowOpensTilesAndRendersSessions() => wpf.Run(async () =>
     {
         using var host = AppHost.Build(["--Demo:Enabled=true", "--Demo:Speed=20", "--Workspace:RestoreOnStartup=false", "--Appearance:Backdrop=None"]);

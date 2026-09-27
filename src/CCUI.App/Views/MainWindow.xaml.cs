@@ -85,7 +85,8 @@ public partial class MainWindow : Window
 
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        var working = _shell.Panes.Count(p => p.Activity == SessionActivity.Working && !p.HasExited);
+        // Demo sessions are scripted; there is nothing to lose by closing them.
+        var working = _shell.IsDemo ? 0 : _shell.Panes.Count(p => p.Activity == SessionActivity.Working && !p.HasExited);
         if (!_closeConfirmed && working > 0
             && !_dialogs.Confirm("Close CCUI", $"{working} session(s) are still working. Close anyway? They will be reopened next time."))
         {

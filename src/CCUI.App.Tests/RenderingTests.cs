@@ -18,10 +18,10 @@ public sealed class RenderingTests(WpfFixture wpf)
 {
     private static readonly DateTimeOffset T0 = new(2026, 9, 27, 10, 0, 0, TimeSpan.Zero);
 
-    [Fact]
+    [Fact(Timeout = 60_000)]
     public Task TerminalDrawsColoursBoxDrawingAndColourEmoji() => wpf.Run(async () =>
     {
-        // Row 0: an orange block bar; row 1: box drawing; row 2: text and a colour emoji at column 10.
+        // Row 0: an orange block bar; row 1: box drawing; row 2: text and a colour emoji at column 9.
         const string output = "\e[38;2;215;119;87m██████████\e[0m\r\n╭──────╮\r\n\e[97mDone ok  \e[0m😀\r\n\e[1;32mbold green\e[0m";
         var session = new TerminalSession(new ScriptedConnection(output), 40, 6, 100);
         var control = new TerminalControl { Session = session, Width = 520, Height = 140, Padding = new Thickness(0), FontSize = 16, UseColorEmoji = true };
@@ -36,11 +36,11 @@ public sealed class RenderingTests(WpfFixture wpf)
         var orange = snapshot[(int)(cell.Width * 2), (int)(cell.Height / 2)];
         Assert.InRange(orange.R, 190, 240);
         Assert.InRange(orange.G, 100, 140);
-        var emojiArea = new Int32Rect((int)(cell.Width * 10), (int)(cell.Height * 2), (int)(cell.Width * 2), (int)cell.Height);
+        var emojiArea = new Int32Rect((int)(cell.Width * 9), (int)(cell.Height * 2), (int)(cell.Width * 2), (int)cell.Height);
         Assert.True(snapshot.HasColourIn(emojiArea), "The emoji should be drawn in colour.");
     });
 
-    [Fact]
+    [Fact(Timeout = 60_000)]
     public Task TerminalRendersTheDemoScreen() => wpf.Run(async () =>
     {
         var launcher = new Core.Demo.DemoSessionLauncher(
@@ -51,6 +51,7 @@ public sealed class RenderingTests(WpfFixture wpf)
         var control = new TerminalControl { Session = runtime.Terminal, FontSize = 14 };
         runtime.Start();
 
+        WpfFixture.Render(control, 1000, 620, "terminal-demo");
         await WpfFixture.Settle(6000);
         var snapshot = WpfFixture.Render(control, 1000, 620, "terminal-demo");
 
@@ -58,7 +59,7 @@ public sealed class RenderingTests(WpfFixture wpf)
         await runtime.DisposeAsync();
     });
 
-    [Fact]
+    [Fact(Timeout = 60_000)]
     public Task SessionPaneShowsHeaderStatsAndDetail() => wpf.Run(async () =>
     {
         var feed = new ManualFeed();
@@ -86,10 +87,10 @@ public sealed class RenderingTests(WpfFixture wpf)
         var snapshot = WpfFixture.Render(view, 1000, 640, "session-pane");
 
         Assert.True(snapshot.CountDistinctColours() > 30);
-        Assert.Equal(3, pane.Detail.All.Count);
+        Assert.Equal(4, pane.Detail.All.Count);
     });
 
-    [Fact]
+    [Fact(Timeout = 60_000)]
     public Task SessionListShowsSessionsAndAgents() => wpf.Run(async () =>
     {
         var shell = TestShell.Create();

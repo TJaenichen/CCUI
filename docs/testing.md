@@ -5,6 +5,7 @@
 | Terminal engine | `CCUI.Terminal.Tests` | any OS | parser, emulator behaviour, widths and graphemes, keys, quoting, recording |
 | Core | `CCUI.Core.Tests` | any OS | transcript parsing, timeline and stats, catalog, hooks, launch planning, meters (fake clock), navigation, workspace, demo mode, view models |
 | WPF rendering | `CCUI.App.Tests` | Windows | loads the real app resources, renders the terminal, a pane, the session list and the whole demo window to PNG, checks pixels |
+| Process hosting | `CCUI.App.Tests` | Windows | starts real processes through the built-in and the bundled ConPTY: environment block, output, typed input (including non-ASCII), exit codes |
 | By eye | your machine | Windows | acrylic, background images, animation feel, speed with many live sessions, DPI and multi-monitor |
 
 Run everything with `dotnet test --solution src/CCUI.sln` (the repo opts into Microsoft.Testing.Platform in

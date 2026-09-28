@@ -8,12 +8,15 @@ namespace CCUI.Core.Metering;
 public sealed class DecayingLevel(TimeProvider time, TimeSpan halfLife, TimeSpan peakHold)
 {
     private const double Silence = 0.002;
+    private static readonly TimeSpan BreathPeriod = TimeSpan.FromSeconds(1.6);
 
     private readonly Lock _gate = new();
     private double _level;
     private long _levelAt;
     private double _peak;
     private long _peakAt;
+    private double _floor;
+    private long _floorAt;
 
     /// <summary>Raised after a hit, so a renderer can start animating.</summary>
     public event EventHandler? Changed;
@@ -36,6 +39,27 @@ public sealed class DecayingLevel(TimeProvider time, TimeSpan halfLife, TimeSpan
                 _peak = amount;
                 _peakAt = now;
             }
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Keeps the level from falling below <paramref name="amount"/> (0..1) until it is set back to 0, breathing
+    /// gently so a long silence (thinking, a slow tool call) still reads as "working". Hits still rise above it.
+    /// </summary>
+    public void SetFloor(double amount)
+    {
+        amount = Math.Clamp(amount, 0, 1);
+        lock (_gate)
+        {
+            if (amount == _floor)
+            {
+                return;
+            }
+
+            _floor = amount;
+            _floorAt = time.GetTimestamp();
         }
 
         Changed?.Invoke(this, EventArgs.Empty);
@@ -67,7 +91,19 @@ public sealed class DecayingLevel(TimeProvider time, TimeSpan halfLife, TimeSpan
     /// <summary>True once both level and peak have decayed to nothing; a renderer can stop animating.</summary>
     public bool IsSilent => Peak <= 0;
 
-    private double LevelAt(long now) => Decay(_level, time.GetElapsedTime(_levelAt, now));
+    private double LevelAt(long now) => Math.Max(Decay(_level, time.GetElapsedTime(_levelAt, now)), FloorAt(now));
+
+    // Swings between 75% and 100% of the floor, starting at the top.
+    private double FloorAt(long now)
+    {
+        if (_floor <= 0)
+        {
+            return 0;
+        }
+
+        var phase = time.GetElapsedTime(_floorAt, now) / BreathPeriod;
+        return _floor * (0.875 + (0.125 * Math.Cos(2 * Math.PI * phase)));
+    }
 
     private double PeakAt(long now)
     {

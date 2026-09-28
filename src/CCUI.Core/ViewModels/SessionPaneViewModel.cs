@@ -20,6 +20,9 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
 {
     private static readonly char[] TitleStatusGlyphs = ['✳', '✻', '✽', '✶', '✢', '·', '⠂', '⠐', '*', ' '];
 
+    /// <summary>The meter floor while Claude is working: a few segments, well under a real burst.</summary>
+    private const double WorkingLevel = 0.2;
+
     private readonly IUiDispatcher _dispatcher;
     private readonly TimeProvider _time;
     private readonly ClaudeSessionRuntime _runtime;
@@ -142,6 +145,9 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
 
     /// <summary>Removes a leading status glyph (Claude Code puts a spinner or "✳" before the title).</summary>
     public static string CleanTitle(string title) => title.TrimStart(TitleStatusGlyphs).Trim();
+
+    // Keeps the "from Claude" meter lit while Claude works, between transcript writes.
+    partial void OnActivityChanged(SessionActivity value) => ReceivedLevel.SetFloor(value == SessionActivity.Working ? WorkingLevel : 0);
 
     partial void OnIsActiveChanged(bool value)
     {

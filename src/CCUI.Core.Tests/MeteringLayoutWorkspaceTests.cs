@@ -26,6 +26,22 @@ public sealed class DecayingLevelTests
     }
 
     [Fact]
+    public void AFloorHoldsTheLevelUntilItIsCleared()
+    {
+        var level = new DecayingLevel(_time, TimeSpan.FromMilliseconds(400), TimeSpan.Zero);
+        level.SetFloor(0.2);
+        level.Hit(0.9);
+
+        _time.Advance(TimeSpan.FromSeconds(30));
+        Assert.InRange(level.Level, 0.15, 0.2);
+        Assert.False(level.IsSilent);
+
+        level.SetFloor(0);
+        _time.Advance(TimeSpan.FromSeconds(10));
+        Assert.True(level.IsSilent);
+    }
+
+    [Fact]
     public void ASmallerHitDoesNotLowerTheLevel()
     {
         var level = new DecayingLevel(_time, TimeSpan.FromMilliseconds(400), TimeSpan.Zero);

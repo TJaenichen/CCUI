@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using AvalonDock.Controls;
 using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
 using CCUI.App.Services;
@@ -81,6 +82,27 @@ public partial class MainWindow : Window
     }
 
     private void OnTileClick(object sender, RoutedEventArgs e) => Tile();
+
+    // Clicking a session's tab (even the active one) makes its terminal ready to type in.
+    private void OnDockMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        for (var node = e.OriginalSource as DependencyObject; node is not null and not AvalonDock.DockingManager; node = Parent(node))
+        {
+            if (node is ButtonBase)
+            {
+                return;
+            }
+
+            if (node is LayoutDocumentTabItem { Model.Content: SessionPaneViewModel pane })
+            {
+                pane.RequestFocus();
+                return;
+            }
+        }
+
+        static DependencyObject? Parent(DependencyObject node) =>
+            node is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
+    }
 
     private void OnSessionListResize(object sender, DragDeltaEventArgs e) =>
         _shell.SessionListWidth = Math.Clamp(_shell.SessionListWidth + e.HorizontalChange, 180, Math.Max(180, ActualWidth / 2));

@@ -86,6 +86,9 @@ public sealed partial class SessionListViewModel : ObservableObject
 {
     private readonly Dictionary<string, SessionListItemViewModel> _all = new(StringComparer.OrdinalIgnoreCase);
 
+    // Sessions the user no longer wants flagged as killed by the reboot.
+    private readonly HashSet<string> _dismissedReboot = new(StringComparer.OrdinalIgnoreCase);
+
     public ObservableCollection<SessionListItemViewModel> Items { get; } = [];
 
     [ObservableProperty]
@@ -107,6 +110,24 @@ public sealed partial class SessionListViewModel : ObservableObject
 
     public SessionListItemViewModel? Find(string sessionId) => _all.GetValueOrDefault(sessionId);
 
+    /// <summary>Session ids whose reboot flag was dismissed, for the workspace to remember.</summary>
+    public IReadOnlyCollection<string> DismissedReboot => _dismissedReboot;
+
+    /// <summary>Brings back dismissals saved with the workspace.</summary>
+    public void RestoreDismissedReboot(IEnumerable<string> sessionIds) => _dismissedReboot.UnionWith(sessionIds);
+
+    /// <summary>Stops flagging these sessions as killed by the reboot.</summary>
+    public void DismissReboot(IEnumerable<SessionListItemViewModel> items)
+    {
+        foreach (var item in items)
+        {
+            _dismissedReboot.Add(item.SessionId);
+            item.KilledAtReboot = false;
+        }
+
+        CountKilledAtReboot();
+    }
+
     public void Update(IReadOnlyList<SessionSummary> summaries, IReadOnlySet<string> killedAtReboot, IReadOnlySet<string> runningElsewhere, Func<string, SessionPaneViewModel?> openPane, DateTimeOffset now)
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -126,7 +147,7 @@ public sealed partial class SessionListViewModel : ObservableObject
                 _all[summary.SessionId] = item;
             }
 
-            item.KilledAtReboot = killedAtReboot.Contains(summary.SessionId);
+            item.KilledAtReboot = killedAtReboot.Contains(summary.SessionId) && !_dismissedReboot.Contains(summary.SessionId);
             item.RunningElsewhere = runningElsewhere.Contains(summary.SessionId);
             item.Pane = openPane(summary.SessionId);
             item.Tick(now);
@@ -137,7 +158,9 @@ public sealed partial class SessionListViewModel : ObservableObject
             _all.Remove(gone);
         }
 
-        KilledAtRebootCount = _all.Values.Count(i => i.KilledAtReboot && !i.IsOpen);
+        // Forget dismissals the detector no longer reports (the session was resumed, or a later reboot took over).
+        _dismissedReboot.IntersectWith(killedAtReboot);
+        CountKilledAtReboot();
         ApplyFilter();
     }
 
@@ -149,10 +172,12 @@ public sealed partial class SessionListViewModel : ObservableObject
             item.Pane = openPane(item.SessionId);
         }
 
-        KilledAtRebootCount = _all.Values.Count(i => i.KilledAtReboot && !i.IsOpen);
+        CountKilledAtReboot();
     }
 
     public IEnumerable<SessionListItemViewModel> KilledAtReboot() => _all.Values.Where(i => i.KilledAtReboot && !i.IsOpen && !i.RunningElsewhere);
+
+    private void CountKilledAtReboot() => KilledAtRebootCount = _all.Values.Count(i => i.KilledAtReboot && !i.IsOpen);
 
     public void Tick(DateTimeOffset now)
     {

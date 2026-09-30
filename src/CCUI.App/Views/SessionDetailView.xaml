@@ -39,7 +39,7 @@
 
     <Border Background="{StaticResource PanelStrongBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,1,0,0">
         <Grid>
-            <TabControl>
+            <TabControl SelectedIndex="{Binding SelectedTab}" PreviewMouseLeftButtonDown="OnTabMouseDown">
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
@@ -66,6 +66,16 @@
                         </StackPanel>
                     </TabItem.Header>
                     <controls:TimelineList ItemsSource="{Binding Tools}" />
+                </TabItem>
+                <!-- Tab index must match SessionDetailViewModel.FailedTab. -->
+                <TabItem Visibility="{Binding Failed.Count, Converter={StaticResource VisibleWhen}}">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Failed" FontSize="11.5" Foreground="{StaticResource ErrorBrush}" />
+                            <TextBlock Margin="5,0,0,0" FontSize="11" Opacity="0.6" Foreground="{StaticResource ErrorBrush}" Text="{Binding Failed.Count}" />
+                        </StackPanel>
+                    </TabItem.Header>
+                    <controls:TimelineList ItemsSource="{Binding Failed}" />
                 </TabItem>
                 <TabItem>
                     <TabItem.Header>

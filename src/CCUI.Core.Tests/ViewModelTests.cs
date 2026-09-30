@@ -197,6 +197,86 @@ public sealed class ViewModelTests
         Assert.Equal("1m ago", list.Items[0].LastActiveText);
     }
 
+    [Fact]
+    public void FailedToolCallsAreListedInOrderOnceTheirResultArrives()
+    {
+        var pane = Pane(out var feed);
+        feed.Push(
+            Transcript.Assistant("m1", Transcript.ToolUse("t1", "Bash", new { command = "one" }), "2026-09-27T10:00:01Z"),
+            Transcript.Assistant("m2", Transcript.ToolUse("t2", "Bash", new { command = "two" }), "2026-09-27T10:00:02Z"),
+            Transcript.Assistant("m3", Transcript.ToolUse("t3", "Bash", new { command = "three" }), "2026-09-27T10:00:03Z"));
+        Assert.Empty(pane.Detail.Failed);
+
+        // Results arrive in separate batches, the later call failing first.
+        feed.Push(Transcript.ToolResult("t3", "boom", isError: true), Transcript.ToolResult("t2", "fine"));
+        feed.Push(Transcript.ToolResult("t1", "bang", isError: true));
+
+        Assert.Equal(["one", "three"], pane.Detail.Failed.Cast<ToolCallItemViewModel>().Select(t => t.Intro));
+        Assert.Equal(2, pane.Stats.ToolErrors);
+
+        pane.ShowFailedToolsCommand.Execute(null);
+        Assert.True(pane.IsDetailOpen);
+        Assert.Equal(SessionDetailViewModel.FailedTab, pane.Detail.SelectedTab);
+    }
+
+    [Theory]
+    [InlineData(0, 2, 2)]
+    [InlineData(2, 2, 0)]
+    [InlineData(2, 4, 4)]
+    [InlineData(0, 0, 0)]
+    public void SelectingTheCurrentFilterAgainClearsIt(int current, int clicked, int expected)
+    {
+        var detail = new SessionDetailViewModel { SelectedTab = current };
+
+        detail.SelectTab(clicked);
+
+        Assert.Equal(expected, detail.SelectedTab);
+    }
+
+    [Fact]
+    public void RebootFlagsCanBeDismissedOneByOneAndStayDismissed()
+    {
+        var list = new SessionListViewModel();
+        var now = _time.GetUtcNow();
+        SessionSummary S(string id) => new() { SessionId = id, TranscriptPath = id, WorkingDirectory = "/w", LastActive = now };
+        var killed = new HashSet<string> { "a", "b" };
+
+        list.Update([S("a"), S("b"), S("c")], killed, new HashSet<string>(), id => null, now);
+        Assert.Equal(2, list.KilledAtRebootCount);
+
+        list.DismissReboot([list.Find("a")!]);
+        Assert.Equal(1, list.KilledAtRebootCount);
+        Assert.False(list.Find("a")!.KilledAtReboot);
+
+        // The next scan reports the same sessions; the dismissal holds.
+        list.Update([S("a"), S("b"), S("c")], killed, new HashSet<string>(), id => null, now);
+        Assert.Equal(["b"], list.KilledAtReboot().Select(i => i.SessionId));
+        Assert.Equal(["a"], list.DismissedReboot);
+
+        // Once the detector stops reporting a session, its dismissal is forgotten.
+        list.Update([S("a"), S("b"), S("c")], new HashSet<string> { "b" }, new HashSet<string>(), id => null, now);
+        Assert.Empty(list.DismissedReboot);
+    }
+
+    [Fact]
+    public async Task DismissedRebootFlagsAreSavedWithTheWorkspace()
+    {
+        var shell = Shell();
+        var now = _time.GetUtcNow();
+        shell.SessionList.Update([new SessionSummary { SessionId = "a", TranscriptPath = "a", WorkingDirectory = "/w", LastActive = now }], new HashSet<string> { "a" }, new HashSet<string>(), id => null, now);
+
+        shell.DismissKilledSessionsCommand.Execute(null);
+
+        Assert.Equal(0, shell.SessionList.KilledAtRebootCount);
+        Assert.Equal(["a"], _store.State!.DismissedRebootSessions);
+
+        var restored = Shell();
+        await restored.StartAsync(_store.State);
+        Assert.Equal(["a"], restored.SessionList.DismissedReboot);
+        await shell.DisposeAsync();
+        await restored.DisposeAsync();
+    }
+
     private SessionPaneViewModel Pane(out FakeFeed feed)
     {
         var runtime = _launcher.Launch(new SessionLaunchRequest("pane", @"C:\src\grants", "s1"));

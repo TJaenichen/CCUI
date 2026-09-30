@@ -369,6 +369,7 @@ public partial class TerminalControl : Control
 
     private OverlayState BuildOverlay() => new(
         SelectionSpans(),
+        LinkSpans(),
         CursorShape,
         CursorOn: !CursorBlink || !IsKeyboardFocusWithin || _blinkOn,
         Focused: IsKeyboardFocusWithin);

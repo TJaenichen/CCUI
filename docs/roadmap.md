@@ -11,7 +11,7 @@ Next steps, roughly in order.
    about $0.04 per million input tokens. Uses: richer session state than the heuristics ("asking a question",
    "waiting for permission", "stuck on an error loop", "done"), flagging risky tool calls in the timeline, and
    ranking which session needs you first. A `ISessionClassifier` seam in Core would keep it optional.
-4. **Terminal polish.** Reflow on resize, clickable OSC 8 hyperlinks, win32-input-mode for exact key reporting,
+4. **Terminal polish.** Reflow on resize, OSC 8 hyperlinks (plain URLs are already Ctrl+clickable), win32-input-mode for exact key reporting,
    importing the look straight from a Windows Terminal profile.
 5. **More agent detail.** Read subagent transcripts (`<session>/subagents/*.jsonl`) to show what each running agent
    is doing under its session.

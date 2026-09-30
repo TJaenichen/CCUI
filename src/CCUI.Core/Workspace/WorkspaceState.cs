@@ -17,6 +17,9 @@ public sealed record WorkspaceState
     public double SessionListWidth { get; init; } = 320;
 
     public bool SessionListVisible { get; init; } = true;
+
+    /// <summary>Sessions the user dismissed from the "killed by the last reboot" notice.</summary>
+    public List<string> DismissedRebootSessions { get; init; } = [];
 }
 
 public sealed record WorkspacePane(string PaneId, string SessionId, string WorkingDirectory, string? Title, bool DetailOpen, double DetailHeight);

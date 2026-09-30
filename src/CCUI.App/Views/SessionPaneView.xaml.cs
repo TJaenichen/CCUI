@@ -35,16 +35,21 @@ public partial class SessionPaneView : UserControl
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (e.OldValue is INotifyPropertyChanged old)
+        if (e.OldValue is SessionPaneViewModel old)
         {
             old.PropertyChanged -= OnViewModelPropertyChanged;
+            old.FocusRequested -= OnFocusRequested;
         }
 
-        if (e.NewValue is INotifyPropertyChanged current)
+        if (e.NewValue is SessionPaneViewModel current)
         {
             current.PropertyChanged += OnViewModelPropertyChanged;
+            current.FocusRequested += OnFocusRequested;
         }
     }
+
+    // Deferred so it runs after whatever took focus with the click (e.g. the docking tab).
+    private void OnFocusRequested(object? sender, EventArgs e) => Dispatcher.BeginInvoke(DispatcherPriority.Input, FocusTerminal);
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

@@ -21,6 +21,25 @@ prompt and pressing Enter gets a short reply that echoes it, which is a quick wa
 (AltGr characters, emoji, Shift+Enter). `Demo:Speed` speeds playback up; the script is in
 `src/CCUI.Core/Demo/DemoScript.cs`.
 
+## Skipping permission prompts ("YOLO mode")
+
+To start every session with `--dangerously-skip-permissions`, put it in your personal overrides rather than
+`appsettings.json`, so it stays on that machine and never becomes the repo default. Create
+`%LOCALAPPDATA%\CCUI\appsettings.user.json` (the folder exists once CCUI has run):
+
+```jsonc
+{
+  "Claude": {
+    "Arguments": [ "--dangerously-skip-permissions" ]
+  }
+}
+```
+
+Restart CCUI. New and resumed sessions then start with the flag; panes already open keep their permissions until
+they are resumed. Claude runs every tool call without asking, so use it only where that is acceptable. If
+organisation-managed Claude Code settings disable bypass mode, Claude refuses the flag and says so in the session.
+To use it for one run only, start CCUI with `--Claude:Arguments:0=--dangerously-skip-permissions`.
+
 ## Sections
 
 **Claude**: how sessions start.

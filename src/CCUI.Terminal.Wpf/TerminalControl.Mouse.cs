@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
@@ -24,6 +25,9 @@ public partial class TerminalControl
     private bool _selecting;
     private int _wheelDelta;
 
+    // The link under the mouse while Ctrl is held, in monotonic line numbers like the selection.
+    private (string Uri, (long Line, int Column) Start, (long Line, int Column) End)? _hoverLink;
+
     public bool HasSelection => _selectionStart is not null && _selectionEnd is not null;
 
     public void ClearSelection()
@@ -43,6 +47,14 @@ public partial class TerminalControl
         Focus();
         if (Session is null || HitCell(e) is not { } hit)
         {
+            return;
+        }
+
+        // As in Windows Terminal: Ctrl+click opens a URL instead of starting a selection.
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && e.ClickCount == 1 && LinkAt(hit) is { } link)
+        {
+            OpenLink(link.Uri);
+            e.Handled = true;
             return;
         }
 
@@ -67,6 +79,7 @@ public partial class TerminalControl
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
+        UpdateHoverLink(e);
         if (!_selecting || _selectionAnchorStart is not { } anchorStart || _selectionAnchorEnd is not { } anchorEnd || HitCell(e) is not { } hit)
         {
             return;
@@ -169,17 +182,100 @@ public partial class TerminalControl
         e.Handled = true;
     }
 
+    protected override void OnMouseLeave(MouseEventArgs e)
+    {
+        base.OnMouseLeave(e);
+        SetHoverLink(null);
+    }
+
+    // Ctrl pressed or released over a link shows or hides its underline without waiting for the mouse to move.
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+        if (e.Key is Key.LeftCtrl or Key.RightCtrl)
+        {
+            UpdateHoverLink(null);
+        }
+    }
+
+    protected override void OnPreviewKeyUp(KeyEventArgs e)
+    {
+        base.OnPreviewKeyUp(e);
+        if (e.Key is Key.LeftCtrl or Key.RightCtrl)
+        {
+            UpdateHoverLink(null);
+        }
+    }
+
+    private static void OpenLink(string uri)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true })?.Dispose();
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            // No handler for the scheme, or the shell refused it: nothing sensible to do from inside the terminal.
+            Debug.WriteLine($"Could not open {uri}: {ex.Message}");
+        }
+    }
+
+    private void UpdateHoverLink(MouseEventArgs? e)
+    {
+        var point = _surface is null ? default : e?.GetPosition(_surface) ?? Mouse.GetPosition(_surface);
+        var overText = _surface is not null && point.X >= 0 && point.Y >= 0 && point.X < _surface.ActualWidth && point.Y < _surface.ActualHeight;
+        var hit = overText && !_selecting && Keyboard.Modifiers.HasFlag(ModifierKeys.Control) ? HitCell(point) : null;
+        SetHoverLink(hit is { } cell ? LinkAt(cell) : null);
+    }
+
+    private void SetHoverLink((string Uri, (long Line, int Column) Start, (long Line, int Column) End)? link)
+    {
+        if (link == _hoverLink)
+        {
+            return;
+        }
+
+        _hoverLink = link;
+        Cursor = link is null ? null : Cursors.Hand;
+        ToolTip = link is null ? null : link.Value.Uri + Environment.NewLine + "Ctrl+click to open";
+        RenderOverlay();
+    }
+
+    private (string Uri, (long Line, int Column) Start, (long Line, int Column) End)? LinkAt((long Line, int Column) hit)
+    {
+        if (Session is not { } session)
+        {
+            return null;
+        }
+
+        lock (session.Emulator.SyncRoot)
+        {
+            var absolute = hit.Line - _droppedLines;
+            if (absolute < 0 || absolute > int.MaxValue
+                || BufferLinks.LinkAt(session.Emulator.Buffer, new BufferPosition((int)absolute, hit.Column)) is not { } link)
+            {
+                return null;
+            }
+
+            return (link.Uri, (link.Start.Line + _droppedLines, link.Start.Column), (link.End.Line + _droppedLines, link.End.Column));
+        }
+    }
+
+    private List<(int Row, int StartColumn, int EndColumn)> LinkSpans() =>
+        _hoverLink is { } link ? Spans(link.Start, link.End) : [];
+
     private static int Compare((long Line, int Column) a, (long Line, int Column) b) =>
         a.Line != b.Line ? a.Line.CompareTo(b.Line) : a.Column.CompareTo(b.Column);
 
-    private (long Line, int Column)? HitCell(MouseEventArgs e)
+    private (long Line, int Column)? HitCell(MouseEventArgs e) => _surface is null ? null : HitCell(e.GetPosition(_surface));
+
+    private (long Line, int Column)? HitCell(Point point)
     {
         if (_surface?.Renderer is not { } renderer || _frame.Rows == 0)
         {
             return null;
         }
 
-        var point = e.GetPosition(_surface);
         var column = Math.Clamp((int)Math.Floor(point.X / renderer.Metrics.Width), 0, _frame.Columns - 1);
         var row = Math.Clamp((int)Math.Floor(point.Y / renderer.Metrics.Height), 0, _frame.Rows - 1);
         return (_droppedLines + _frame.TopLine + row, column);
@@ -227,10 +323,14 @@ public partial class TerminalControl
         }
     }
 
-    private List<(int Row, int StartColumn, int EndColumn)> SelectionSpans()
+    private List<(int Row, int StartColumn, int EndColumn)> SelectionSpans() =>
+        _selectionStart is { } start && _selectionEnd is { } end ? Spans(start, end) : [];
+
+    /// <summary>The visible row spans covering <paramref name="start"/> to <paramref name="end"/> (inclusive).</summary>
+    private List<(int Row, int StartColumn, int EndColumn)> Spans((long Line, int Column) start, (long Line, int Column) end)
     {
         var spans = new List<(int, int, int)>();
-        if (_selectionStart is not { } start || _selectionEnd is not { } end || _frame.Rows == 0)
+        if (_frame.Rows == 0)
         {
             return spans;
         }

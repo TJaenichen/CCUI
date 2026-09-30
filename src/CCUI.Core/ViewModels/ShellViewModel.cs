@@ -110,6 +110,7 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
 
         IsSessionListVisible = saved.SessionListVisible;
         SessionListWidth = saved.SessionListWidth;
+        SessionList.RestoreDismissedReboot(saved.DismissedRebootSessions);
 
         // Create every pane first so the saved layout can place them, then start the sessions one by one.
         var runningElsewhere = _services.Processes.RunningSessionIds();
@@ -153,6 +154,7 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         Window = WindowProvider?.Invoke(),
         SessionListWidth = SessionListWidth,
         SessionListVisible = IsSessionListVisible,
+        DismissedRebootSessions = [.. SessionList.DismissedReboot],
     };
 
     public void SaveWorkspace()
@@ -247,6 +249,27 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         {
             OpenSession(item);
         }
+    }
+
+    /// <summary>Dismisses the reboot notice for every flagged session.</summary>
+    [RelayCommand]
+    private void DismissKilledSessions()
+    {
+        SessionList.DismissReboot(SessionList.KilledAtReboot().ToList());
+        SaveWorkspace();
+    }
+
+    /// <summary>Dismisses the reboot flag of one session.</summary>
+    [RelayCommand]
+    private void DismissKilledSession(SessionListItemViewModel? item)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        SessionList.DismissReboot([item]);
+        SaveWorkspace();
     }
 
     [RelayCommand]

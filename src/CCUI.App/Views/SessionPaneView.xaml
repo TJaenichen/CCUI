@@ -118,9 +118,12 @@
                         <TextBlock DataContext="{Binding Stats}" Style="{StaticResource StatTextStyle}" Margin="0,0,4,0" ToolTip="Tool calls">
                             <Run Text="{Binding ToolCalls, Mode=OneWay}" /><Run Text=" tools" Foreground="{StaticResource TextMutedBrush}" />
                         </TextBlock>
-                        <TextBlock DataContext="{Binding Stats}" Style="{StaticResource StatTextStyle}" Foreground="{StaticResource ErrorBrush}" ToolTip="Failed tool calls"
-                                   Text="{Binding ToolErrors, StringFormat='{}{0} failed'}"
-                                   Visibility="{Binding ToolErrors, Converter={StaticResource VisibleWhen}}" />
+                        <Button Style="{StaticResource TextButtonStyle}" VerticalAlignment="Center" Command="{Binding ShowFailedToolsCommand}"
+                                ToolTip="Failed tool calls: click to list them"
+                                Visibility="{Binding Stats.ToolErrors, Converter={StaticResource VisibleWhen}}">
+                            <TextBlock DataContext="{Binding Stats}" Style="{StaticResource StatTextStyle}" Foreground="{StaticResource ErrorBrush}"
+                                       Text="{Binding ToolErrors, StringFormat='{}{0} failed'}" />
+                        </Button>
                     </WrapPanel>
 
                     <!-- Activity: to the model (prompts, tool results) and from it (text, thinking, tool calls). -->

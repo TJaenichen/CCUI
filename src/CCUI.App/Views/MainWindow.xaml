@@ -108,7 +108,8 @@
                                        DocumentsSource="{Binding Panes}"
                                        ActiveContent="{Binding ActivePane, Mode=TwoWay}"
                                        Background="Transparent"
-                                       AllowMixedOrientation="True">
+                                       AllowMixedOrientation="True"
+                                       PreviewMouseLeftButtonUp="OnDockMouseUp">
                 <avalonDock:DockingManager.Resources>
                     <!-- Overrides of the VS2013 dark theme: transparent wells so the backdrop shows, accent-coloured active tab. -->
                     <SolidColorBrush x:Key="{x:Static reskeys:ResourceKeys.Background}" Color="Transparent" />

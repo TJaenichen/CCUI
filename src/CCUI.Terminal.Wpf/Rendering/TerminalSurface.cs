@@ -4,9 +4,10 @@ using CCUI.Terminal.Buffer;
 
 namespace CCUI.Terminal.Wpf.Rendering;
 
-/// <summary>What the overlay draws on top of the text: selection spans and the cursor.</summary>
+/// <summary>What the overlay draws on top of the text: selection spans, the hovered link and the cursor.</summary>
 internal readonly record struct OverlayState(
     IReadOnlyList<(int Row, int StartColumn, int EndColumn)> Selection,
+    IReadOnlyList<(int Row, int StartColumn, int EndColumn)> Link,
     CursorShape CursorShape,
     bool CursorOn,
     bool Focused);
@@ -99,6 +100,16 @@ internal sealed class TerminalSurface : FrameworkElement
             foreach (var (row, start, end) in overlay.Selection)
             {
                 dc.DrawRectangle(brush, null, new Rect(start * m.Width, row * m.Height, (end - start + 1) * m.Width, m.Height));
+            }
+        }
+
+        if (overlay.Link.Count > 0)
+        {
+            var brush = renderer.Brushes.Get(renderer.Palette.Foreground);
+            var thickness = Math.Max(1 / m.PixelsPerDip, m.Snap(m.Height * 0.06));
+            foreach (var (row, start, end) in overlay.Link)
+            {
+                dc.DrawRectangle(brush, null, new Rect(start * m.Width, (row + 1) * m.Height - thickness, (end - start + 1) * m.Width, thickness));
             }
         }
 

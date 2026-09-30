@@ -157,8 +157,21 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
         }
     }
 
+    /// <summary>The view should put the keyboard in this pane's terminal.</summary>
+    public event EventHandler? FocusRequested;
+
+    public void RequestFocus() => FocusRequested?.Invoke(this, EventArgs.Empty);
+
     [RelayCommand]
     private void ToggleDetail() => IsDetailOpen = !IsDetailOpen;
+
+    /// <summary>Opens the detail view on the failed tool calls.</summary>
+    [RelayCommand]
+    private void ShowFailedTools()
+    {
+        Detail.ShowFailed();
+        IsDetailOpen = true;
+    }
 
     [RelayCommand]
     private void Close() => CloseRequested?.Invoke(this, EventArgs.Empty);

@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CCUI.Core.ViewModels;assembly=CCUI.Core"
              xmlns:claude="clr-namespace:CCUI.Core.Claude;assembly=CCUI.Core"
+             xmlns:controls="clr-namespace:CCUI.App.Controls"
              Foreground="{StaticResource TextPrimaryBrush}"
              FontFamily="{StaticResource UiFont}"
              FontSize="12.5"
@@ -38,6 +39,32 @@
                 <DataTrigger Binding="{Binding Pane.HasExited}" Value="True">
                     <Setter Property="Fill" Value="{StaticResource ExitedBrush}" />
                 </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Pane.Activity}" Value="{x:Static claude:SessionActivity.Working}" />
+                        <Condition Binding="{Binding Pane.HasExited}" Value="False" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Stands in for the state dot while Claude works, in the state colours (blue; amber when it needs you). -->
+        <Style x:Key="ListSpinnerStyle" TargetType="controls:OrbitSpinner">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Setter Property="Fill" Value="{StaticResource WorkingBrush}" />
+            <Setter Property="IsSpinning" Value="{DynamicResource AnimationsEnabled}" />
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Pane.Activity}" Value="{x:Static claude:SessionActivity.Working}" />
+                        <Condition Binding="{Binding Pane.HasExited}" Value="False" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding Pane.NeedsAttention}" Value="True">
+                    <Setter Property="Fill" Value="{StaticResource AttentionBrush}" />
+                </DataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -53,7 +80,10 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Ellipse Style="{StaticResource ListDotStyle}" />
+                <Grid Width="13" Height="13" Margin="-2,3,6,0" VerticalAlignment="Top">
+                    <Ellipse Style="{StaticResource ListDotStyle}" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <controls:OrbitSpinner Style="{StaticResource ListSpinnerStyle}" />
+                </Grid>
                 <StackPanel Grid.Column="1">
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,0">

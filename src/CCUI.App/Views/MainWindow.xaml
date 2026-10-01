@@ -7,6 +7,7 @@
         xmlns:reskeys="clr-namespace:AvalonDock.Themes.VS2013.Themes;assembly=AvalonDock.Themes.VS2013"
         xmlns:vm="clr-namespace:CCUI.Core.ViewModels;assembly=CCUI.Core"
         xmlns:claude="clr-namespace:CCUI.Core.Claude;assembly=CCUI.Core"
+        xmlns:controls="clr-namespace:CCUI.App.Controls"
         xmlns:views="clr-namespace:CCUI.App.Views"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance vm:ShellViewModel}"
@@ -40,6 +41,32 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Content.HasExited}" Value="True">
                     <Setter Property="Fill" Value="{StaticResource ExitedBrush}" />
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Content.Activity}" Value="{x:Static claude:SessionActivity.Working}" />
+                        <Condition Binding="{Binding Content.HasExited}" Value="False" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Stands in for the state dot while Claude works, in the state colours (blue; amber when it needs you). -->
+        <Style x:Key="DocumentHeaderSpinner" TargetType="controls:OrbitSpinner">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Setter Property="Fill" Value="{StaticResource WorkingBrush}" />
+            <Setter Property="IsSpinning" Value="{DynamicResource AnimationsEnabled}" />
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Content.Activity}" Value="{x:Static claude:SessionActivity.Working}" />
+                        <Condition Binding="{Binding Content.HasExited}" Value="False" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding Content.NeedsAttention}" Value="True">
+                    <Setter Property="Fill" Value="{StaticResource AttentionBrush}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -145,7 +172,10 @@
                 <avalonDock:DockingManager.DocumentHeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
-                            <Ellipse Style="{StaticResource DocumentHeaderDot}" />
+                            <Grid Width="11" Height="11" Margin="-2,0,4,0" VerticalAlignment="Center">
+                                <Ellipse Style="{StaticResource DocumentHeaderDot}" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <controls:OrbitSpinner Style="{StaticResource DocumentHeaderSpinner}" />
+                            </Grid>
                             <TextBlock Text="{Binding Title}" MaxWidth="220" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </DataTemplate>

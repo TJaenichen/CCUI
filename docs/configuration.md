@@ -65,7 +65,8 @@ To use it for one run only, start CCUI with `--Claude:Arguments:0=--dangerously-
 
 **Appearance**: `Backdrop` (Acrylic, Mica, MicaAlt, None; Windows 11), `WindowTint` (#AARRGGBB over the
 backdrop), `AccentColor`, `FocusBorderColor`, `FocusBorderThickness`, `MeterDecayMilliseconds`,
-`MeterPeakHoldMilliseconds`.
+`MeterPeakHoldMilliseconds`, `Animations` (the working spinner: `On`, `Off`, or `System` to follow Windows' "Show
+animations"; not the default because Remote Desktop sessions report animations as off).
 
 **KeyBindings**: `FocusLeft/Right/Up/Down` (Alt+Arrows), `ToggleDetail` (Ctrl+Shift+D), `NewSession`
 (Ctrl+Shift+T), `CloseSession` (Ctrl+Shift+W), `ToggleSessionList` (Ctrl+Shift+B), `FocusSessionList`

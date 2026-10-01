@@ -156,6 +156,12 @@ public sealed class AppearanceOptions
 
     /// <summary>How long the meters' peak marker holds before it falls.</summary>
     public int MeterPeakHoldMilliseconds { get; set; } = 900;
+
+    /// <summary>
+    /// Decorative animation (the working spinner): On, Off, or System to follow Windows' "Show animations". System
+    /// is not the default because Remote Desktop sessions report animations as off.
+    /// </summary>
+    public string Animations { get; set; } = "On";
 }
 
 /// <summary>App-level shortcuts as WPF key gestures. Section "KeyBindings".</summary>

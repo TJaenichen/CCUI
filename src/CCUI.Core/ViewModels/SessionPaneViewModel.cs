@@ -18,7 +18,6 @@ public sealed record PaneSettings(long ContextWindowTokens, TimeSpan MeterHalfLi
 /// </summary>
 public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDisposable
 {
-    private static readonly char[] TitleStatusGlyphs = ['✳', '✻', '✽', '✶', '✢', '·', '⠂', '⠐', '*', ' '];
 
     /// <summary>The meter floor while Claude is working: a few segments, well under a real burst.</summary>
     private const double WorkingLevel = 0.2;
@@ -146,7 +145,23 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
     }
 
     /// <summary>Removes a leading status glyph (Claude Code puts a spinner or "✳" before the title).</summary>
-    public static string CleanTitle(string title) => title.TrimStart(TitleStatusGlyphs).Trim();
+    /// <summary>
+    /// The title without the status glyph Claude Code puts in front of it (✳ idle; a spinner such as ✻ ✶ ⠂ ⠐ or
+    /// ◐ ◓ ◑ ◒ while working). Any leading symbol counts, so new spinner styles need no update here.
+    /// </summary>
+    public static string CleanTitle(string title)
+    {
+        var start = 0;
+        while (start < title.Length && (char.IsWhiteSpace(title[start]) || IsStatusGlyph(title[start])))
+        {
+            start++;
+        }
+
+        return title[start..].Trim();
+    }
+
+    // Box drawing through dingbats (geometric shapes, stars, asterisks), braille, and the ASCII stand-ins.
+    private static bool IsStatusGlyph(char c) => c is (>= '─' and <= '➿') or (>= '⠀' and <= '⣿') or '·' or '*';
 
     // Keeps the "from Claude" meter lit while Claude works, between transcript writes.
     partial void OnActivityChanged(SessionActivity value) => ReceivedLevel.SetFloor(value == SessionActivity.Working ? WorkingLevel : 0);

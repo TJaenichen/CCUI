@@ -28,6 +28,10 @@
 
     <!-- Session states -->
     <SolidColorBrush x:Key="WorkingBrush" Color="#61AFEF" />
+    <!-- Claude's own orange, independent of the configurable accent. -->
+    <SolidColorBrush x:Key="ClaudeBrush" Color="#D97757" />
+    <!-- Replaced from Appearance:Animations at startup. -->
+    <sys:Boolean x:Key="AnimationsEnabled">True</sys:Boolean>
     <SolidColorBrush x:Key="WaitingBrush" Color="#98C379" />
     <SolidColorBrush x:Key="IdleBrush" Color="#7F848E" />
     <SolidColorBrush x:Key="ExitedBrush" Color="#5A5A5A" />

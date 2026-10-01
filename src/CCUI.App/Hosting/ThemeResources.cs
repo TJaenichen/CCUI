@@ -22,6 +22,12 @@ public static class ThemeResources
         Set(app, "FocusBorderThickness", new Thickness(Math.Max(0, appearance.FocusBorderThickness)));
         Set(app, "WindowTintBrush", Freeze(new SolidColorBrush(ParseColor(appearance.WindowTint, Color.FromArgb(0xB0, 0x10, 0x10, 0x14)))));
         Set(app, "TerminalAppearance", services.GetRequiredService<TerminalAppearance>());
+        Set(app, "AnimationsEnabled", appearance.Animations.Trim().ToUpperInvariant() switch
+        {
+            "OFF" => false,
+            "SYSTEM" => SystemParameters.ClientAreaAnimation,
+            _ => true,
+        });
     }
 
     public static Color ParseColor(string? value, Color fallback)

@@ -100,7 +100,11 @@ public sealed class ViewModelTests
     [Theory]
     [InlineData("✳ grants", "grants")]
     [InlineData("✻ Fixing tests", "Fixing tests")]
+    [InlineData("◐ ccui", "ccui")]
+    [InlineData("◓  Unit test coverage", "Unit test coverage")]
+    [InlineData("⠐ build", "build")]
     [InlineData("plain", "plain")]
+    [InlineData("2 ◐ things", "2 ◐ things")]
     public void CleansTerminalTitles(string raw, string expected) => Assert.Equal(expected, SessionPaneViewModel.CleanTitle(raw));
 
     [Fact]

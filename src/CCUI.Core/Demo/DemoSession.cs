@@ -380,6 +380,12 @@ public sealed class DemoSession
     {
         public event EventHandler<IReadOnlyList<TranscriptEvent>>? EventsArrived;
 
+        public event EventHandler<IReadOnlyList<TranscriptEvent>>? SubagentEventsArrived
+        {
+            add { }
+            remove { }
+        }
+
         public event EventHandler<HookEvent>? HookReceived;
 
         public event EventHandler<string>? SessionSwitched

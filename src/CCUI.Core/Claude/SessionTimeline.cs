@@ -100,7 +100,19 @@ public enum ActivityDirection
 }
 
 /// <summary>A burst of traffic for the activity meters; <see cref="Size"/> is in characters.</summary>
-public readonly record struct ActivityPulse(ActivityDirection Direction, long Size);
+public readonly record struct ActivityPulse(ActivityDirection Direction, long Size)
+{
+    /// <summary>The traffic an event stands for, or null for events that carry none (metadata, usage).</summary>
+    public static ActivityPulse? For(TranscriptEvent e) => e switch
+    {
+        UserPromptEvent prompt => new ActivityPulse(ActivityDirection.Sent, prompt.Text.Length),
+        ToolResultEvent result => new ActivityPulse(ActivityDirection.Sent, result.Content.Length),
+        AssistantTextEvent text => new ActivityPulse(ActivityDirection.Received, text.Text.Length),
+        ThinkingEvent thinking => new ActivityPulse(ActivityDirection.Received, thinking.Text.Length),
+        ToolUseEvent tool => new ActivityPulse(ActivityDirection.Received, tool.InputJson.Length),
+        _ => null,
+    };
+}
 
 /// <summary>
 /// Folds transcript events into timeline items and statistics. Not thread-safe; feed it from one thread.
@@ -136,6 +148,11 @@ public sealed class SessionTimeline
 
         foreach (var e in events)
         {
+            if (ActivityPulse.For(e) is { } pulse)
+            {
+                pulses.Add(pulse);
+            }
+
             if (e.Timestamp != DateTimeOffset.MinValue)
             {
                 stats = stats with
@@ -159,7 +176,6 @@ public sealed class SessionTimeline
 
                 case UserPromptEvent prompt:
                     added.Add(Add(TimelineItemKind.Prompt, prompt, prompt.Text));
-                    pulses.Add(new ActivityPulse(ActivityDirection.Sent, prompt.Text.Length));
                     if (prompt.AgentId is null && !prompt.IsSlashCommand)
                     {
                         stats = EndTurn(stats);
@@ -177,14 +193,12 @@ public sealed class SessionTimeline
 
                 case AssistantTextEvent text:
                     added.Add(Add(TimelineItemKind.Response, text, text.Text, messageId: text.MessageId));
-                    pulses.Add(new ActivityPulse(ActivityDirection.Received, text.Text.Length));
                     stats = stats with { Responses = stats.Responses + (text.AgentId is null ? 1 : 0) };
                     TouchTurn(text);
                     break;
 
                 case ThinkingEvent thinking:
                     added.Add(Add(TimelineItemKind.Thinking, thinking, thinking.Text, messageId: thinking.MessageId));
-                    pulses.Add(new ActivityPulse(ActivityDirection.Received, thinking.Text.Length));
                     TouchTurn(thinking);
                     break;
 
@@ -192,7 +206,6 @@ public sealed class SessionTimeline
                     var call = Add(TimelineItemKind.ToolCall, tool, tool.Name, tool.ToolUseId, tool.InputJson, tool.MessageId);
                     _toolCalls[tool.ToolUseId] = call;
                     added.Add(call);
-                    pulses.Add(new ActivityPulse(ActivityDirection.Received, tool.InputJson.Length));
                     stats = stats with { ToolCalls = stats.ToolCalls + 1, Activity = SessionActivity.Working };
                     if (ToolSummaries.IsAgentTool(tool.Name))
                     {
@@ -203,7 +216,6 @@ public sealed class SessionTimeline
                     break;
 
                 case ToolResultEvent result:
-                    pulses.Add(new ActivityPulse(ActivityDirection.Sent, result.Content.Length));
                     if (_toolCalls.Remove(result.ToolUseId, out var pending))
                     {
                         pending.ToolResult = result.Content;

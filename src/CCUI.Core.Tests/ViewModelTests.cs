@@ -43,6 +43,21 @@ public sealed class ViewModelTests
     }
 
     [Fact]
+    public void SubagentActivityMovesTheMetersOnly()
+    {
+        var pane = Pane(out var feed);
+
+        feed.PushSubagent(
+            Transcript.Assistant("a1", Transcript.ToolUse("t9", "Bash", new { command = "dotnet build" }), sidechain: true),
+            Transcript.ToolResult("t9", "error CS1002", isError: true));
+
+        Assert.True(pane.ReceivedLevel.Level > 0);
+        Assert.True(pane.SentLevel.Level > 0);
+        Assert.Empty(pane.Detail.All);
+        Assert.Equal((0, 0), (pane.Stats.ToolCalls, pane.Stats.ToolErrors));
+    }
+
+    [Fact]
     public void RunningTurnTimeTicks()
     {
         var pane = Pane(out var feed);
@@ -344,6 +359,8 @@ public sealed class ViewModelTests
     {
         public event EventHandler<IReadOnlyList<TranscriptEvent>>? EventsArrived;
 
+        public event EventHandler<IReadOnlyList<TranscriptEvent>>? SubagentEventsArrived;
+
         public event EventHandler<HookEvent>? HookReceived;
 
         public event EventHandler<string>? SessionSwitched;
@@ -357,6 +374,8 @@ public sealed class ViewModelTests
         public void Dispose() => Disposed = true;
 
         public void Push(params string[] lines) => EventsArrived?.Invoke(this, [.. lines.SelectMany(TranscriptParser.Parse)]);
+
+        public void PushSubagent(params string[] lines) => SubagentEventsArrived?.Invoke(this, [.. lines.SelectMany(TranscriptParser.Parse)]);
 
         public void Hook(HookEvent hook) => HookReceived?.Invoke(this, hook);
 

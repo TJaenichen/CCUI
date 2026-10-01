@@ -115,6 +115,36 @@ public sealed class LaunchAndHookTests : IDisposable
         Assert.Equal(["new"], switched);
     }
 
+    [Fact]
+    public void FeedReportsNewSubagentActivityButNotItsHistory()
+    {
+        var home = Path.Combine(_root, "claude");
+        var project = Path.Combine(home, "projects", "p");
+        var agents = Path.Combine(project, "s1", "subagents");
+        Directory.CreateDirectory(agents);
+        File.WriteAllText(Path.Combine(project, "s1.jsonl"), Transcript.User("main") + "\n");
+        var running = Path.Combine(agents, "agent-a1.jsonl");
+        File.WriteAllText(running, Transcript.Assistant("old", Transcript.Text("history"), sidechain: true) + "\n");
+
+        using var feed = new FileTranscriptFeed(new ClaudePaths(home), "s1", @"C:\x", null, TimeSpan.FromSeconds(1), TimeProvider.System);
+        var main = new List<TranscriptEvent>();
+        var sub = new List<string>();
+        feed.EventsArrived += (_, events) => main.AddRange(events);
+        feed.SubagentEventsArrived += (_, events) => sub.AddRange(events.OfType<AssistantTextEvent>().Select(t => t.Text));
+
+        feed.Poll();
+        Assert.Empty(sub);
+
+        // The running agent writes more, and a second agent starts.
+        File.AppendAllText(running, Transcript.Assistant("m2", Transcript.Text("working"), sidechain: true) + "\n");
+        File.WriteAllText(Path.Combine(agents, "agent-a2.jsonl"), Transcript.Assistant("m3", Transcript.Text("started"), sidechain: true) + "\n");
+        feed.Poll();
+        feed.Poll();
+
+        Assert.Equal(["started", "working"], sub.Order());
+        Assert.Single(main.OfType<UserPromptEvent>());
+    }
+
     private static Dictionary<string, string> Env(params (string Key, string Value)[] values) =>
         values.ToDictionary(v => v.Key, v => v.Value, StringComparer.OrdinalIgnoreCase);
 }

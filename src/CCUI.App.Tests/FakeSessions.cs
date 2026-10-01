@@ -33,6 +33,12 @@ internal sealed class ManualFeed : ITranscriptFeed
 {
     public event EventHandler<IReadOnlyList<TranscriptEvent>>? EventsArrived;
 
+    public event EventHandler<IReadOnlyList<TranscriptEvent>>? SubagentEventsArrived
+    {
+        add { }
+        remove { }
+    }
+
     public event EventHandler<HookEvent>? HookReceived
     {
         add { }

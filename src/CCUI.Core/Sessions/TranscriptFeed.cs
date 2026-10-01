@@ -7,6 +7,9 @@ public interface ITranscriptFeed : IDisposable
 {
     event EventHandler<IReadOnlyList<TranscriptEvent>>? EventsArrived;
 
+    /// <summary>New events from the session's subagent transcripts (live activity only, no history).</summary>
+    event EventHandler<IReadOnlyList<TranscriptEvent>>? SubagentEventsArrived;
+
     event EventHandler<HookEvent>? HookReceived;
 
     /// <summary>The pane now shows a different session (after /clear); the argument is the new session id.</summary>
@@ -16,8 +19,8 @@ public interface ITranscriptFeed : IDisposable
 }
 
 /// <summary>
-/// Polls a session's transcript file and its pane's hook file. Before the transcript exists (a brand-new session)
-/// it keeps looking for it.
+/// Polls a session's transcript file, its subagent transcripts (<c>&lt;session&gt;/subagents/*.jsonl</c> next to it)
+/// and its pane's hook file. Before the transcript exists (a brand-new session) it keeps looking for it.
 /// </summary>
 public sealed class FileTranscriptFeed(
     ClaudePaths paths,
@@ -31,10 +34,13 @@ public sealed class FileTranscriptFeed(
     private string _sessionId = sessionId;
     private string? _transcriptPath;
     private TranscriptReader? _reader;
+    private SubagentTranscripts? _subagents;
     private ITimer? _timer;
     private int _polling;
 
     public event EventHandler<IReadOnlyList<TranscriptEvent>>? EventsArrived;
+
+    public event EventHandler<IReadOnlyList<TranscriptEvent>>? SubagentEventsArrived;
 
     public event EventHandler<HookEvent>? HookReceived;
 
@@ -59,6 +65,7 @@ public sealed class FileTranscriptFeed(
             {
                 _transcriptPath = path;
                 _reader = new TranscriptReader(path);
+                _subagents = new SubagentTranscripts(SubagentTranscripts.DirectoryFor(path));
             }
 
             if (_reader is not null)
@@ -68,6 +75,11 @@ public sealed class FileTranscriptFeed(
                 {
                     EventsArrived?.Invoke(this, events);
                 }
+            }
+
+            if (_subagents?.ReadNewEvents() is { Count: > 0 } subagentEvents)
+            {
+                SubagentEventsArrived?.Invoke(this, subagentEvents);
             }
         }
         finally
@@ -95,6 +107,7 @@ public sealed class FileTranscriptFeed(
                 _sessionId = id;
                 _transcriptPath = hook.TranscriptPath;
                 _reader = null;
+                _subagents = null;
                 SessionSwitched?.Invoke(this, id);
             }
 

@@ -115,6 +115,7 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
     public void Start()
     {
         _runtime.Feed.EventsArrived += OnEventsArrived;
+        _runtime.Feed.SubagentEventsArrived += OnSubagentEventsArrived;
         _runtime.Feed.HookReceived += OnHookReceived;
         _runtime.Feed.SessionSwitched += OnSessionSwitched;
         var emulator = _runtime.Terminal.Emulator;
@@ -138,6 +139,7 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
 
         _disposed = true;
         _runtime.Feed.EventsArrived -= OnEventsArrived;
+        _runtime.Feed.SubagentEventsArrived -= OnSubagentEventsArrived;
         _runtime.Feed.HookReceived -= OnHookReceived;
         _runtime.Feed.SessionSwitched -= OnSessionSwitched;
         await _runtime.DisposeAsync().ConfigureAwait(false);
@@ -184,6 +186,23 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
 
     private void OnEventsArrived(object? sender, IReadOnlyList<TranscriptEvent> events) => _dispatcher.Post(() => Apply(events));
 
+    // Subagent traffic only moves the meters: their tool calls and tokens stay out of the session's timeline and stats.
+    private void OnSubagentEventsArrived(object? sender, IReadOnlyList<TranscriptEvent> events) => _dispatcher.Post(() =>
+    {
+        if (!_disposed)
+        {
+            Hit(events.Select(ActivityPulse.For).OfType<ActivityPulse>());
+        }
+    });
+
+    private void Hit(IEnumerable<ActivityPulse> pulses)
+    {
+        foreach (var pulse in pulses)
+        {
+            (pulse.Direction == ActivityDirection.Sent ? SentLevel : ReceivedLevel).Hit(LevelScale.FromSize(pulse.Size));
+        }
+    }
+
     private void Apply(IReadOnlyList<TranscriptEvent> events)
     {
         if (_disposed)
@@ -193,10 +212,7 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
 
         var changes = _timeline.Apply(events);
         Detail.Apply(changes);
-        foreach (var pulse in changes.Pulses)
-        {
-            (pulse.Direction == ActivityDirection.Sent ? SentLevel : ReceivedLevel).Hit(LevelScale.FromSize(pulse.Size));
-        }
+        Hit(changes.Pulses);
 
         var stats = _timeline.Statistics;
         Stats.Update(stats, _time.GetUtcNow());

@@ -71,6 +71,24 @@ public sealed class SessionTimelineTests
     }
 
     [Fact]
+    public void CompactingAfterATurnLeavesTheSessionWaiting()
+    {
+        // As logged by Claude Code 2.1: the typed command as plain text, the summary as a user message, then the
+        // command again in tags and its output.
+        const string summary = """{"type":"user","isCompactSummary":true,"isVisibleInTranscriptOnly":true,"message":{"role":"user","content":"This session is being continued from a previous conversation."},"timestamp":"2026-09-27T10:02:00.000Z"}""";
+        var timeline = Feed(
+            Transcript.User("first", "2026-09-27T10:00:00Z"),
+            Transcript.Assistant("m1", Transcript.Text("done"), "2026-09-27T10:00:04Z", stop: "end_turn"),
+            Transcript.User("/compact", "2026-09-27T10:01:00Z"),
+            summary,
+            Transcript.User("<command-name>/compact</command-name>\n<command-message>compact</command-message>\n<command-args></command-args>", "2026-09-27T10:01:00Z"),
+            Transcript.User("<local-command-stdout>Compacted</local-command-stdout>", "2026-09-27T10:02:01Z"));
+
+        Assert.Equal(SessionActivity.WaitingForUser, timeline.Statistics.Activity);
+        Assert.Equal(1, timeline.Statistics.Prompts);
+    }
+
+    [Fact]
     public void ListsSubagentsUntilTheyReturn()
     {
         var timeline = Feed(Transcript.Assistant("m1", Transcript.ToolUse("t9", "Task", new { description = "Find the tagger", subagent_type = "Explore", prompt = "…" })));

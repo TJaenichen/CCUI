@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace CCUI.Core.Claude;
 
@@ -8,7 +9,7 @@ namespace CCUI.Core.Claude;
 /// Decodes Claude Code transcript lines (~/.claude/projects/&lt;dir&gt;/&lt;session&gt;.jsonl). The format is not a
 /// public contract, so everything is read defensively: unknown record types and fields are ignored.
 /// </summary>
-public static class TranscriptParser
+public static partial class TranscriptParser
 {
     private static readonly string[] SyntheticPromptPrefixes = ["<local-command-stdout>", "<local-command-stderr>", "<system-reminder>", "<command-message>", "Caveat:"];
 
@@ -79,13 +80,17 @@ public static class TranscriptParser
     public static bool IsSyntheticPrompt(string text) =>
         SyntheticPromptPrefixes.Any(p => text.StartsWith(p, StringComparison.Ordinal));
 
-    /// <summary>Turns "&lt;command-name&gt;/model&lt;/command-name&gt;&lt;command-args&gt;opus&lt;/command-args&gt;" into "/model opus".</summary>
+    /// <summary>
+    /// The slash command a user line holds, or null: "&lt;command-name&gt;/model&lt;/command-name&gt;&lt;command-args&gt;opus&lt;/command-args&gt;"
+    /// becomes "/model opus". Newer Claude Code versions also log the typed command as plain text ("/compact"); a
+    /// first word like "/name" counts, a path such as "/c/work/x" does not.
+    /// </summary>
     public static string? SlashCommand(string text)
     {
         var name = Between(text, "<command-name>", "</command-name>");
         if (name is null)
         {
-            return null;
+            return PlainSlashCommand().IsMatch(text) ? text.Trim() : null;
         }
 
         var args = Between(text, "<command-args>", "</command-args>");
@@ -146,7 +151,8 @@ public static class TranscriptParser
             }
         }
 
-        var isMeta = root.TryGetProperty("isMeta", out var meta) && meta.ValueKind == JsonValueKind.True;
+        // Meta lines, and the summary a compaction writes as a user message, are not prompts.
+        var isMeta = IsTrue(root, "isMeta") || IsTrue(root, "isCompactSummary") || IsTrue(root, "isVisibleInTranscriptOnly");
         if (isMeta || PromptText(message) is not { } text)
         {
             return;
@@ -161,6 +167,12 @@ public static class TranscriptParser
             events.Add(new UserPromptEvent(timestamp, agentId, text, IsSlashCommand: false));
         }
     }
+
+    [GeneratedRegex(@"^/[A-Za-z][\w:.-]*(\s|$)", RegexOptions.CultureInvariant)]
+    private static partial Regex PlainSlashCommand();
+
+    private static bool IsTrue(JsonElement root, string property) =>
+        root.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.True;
 
     private static void ParseAssistant(JsonElement root, DateTimeOffset timestamp, string? agentId, List<TranscriptEvent> events)
     {

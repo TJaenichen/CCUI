@@ -42,6 +42,33 @@ public sealed class TranscriptParserTests
         Assert.Equal("/model opus", prompt.Text);
     }
 
+    [Theory]
+    [InlineData("/compact", "/compact")]
+    [InlineData("/model opus", "/model opus")]
+    [InlineData("/plugin:skill args\nmore", "/plugin:skill args\nmore")]
+    public void RecognisesSlashCommandsLoggedAsPlainText(string text, string expected)
+    {
+        var prompt = Assert.Single(TranscriptParser.Parse(Transcript.User(text)).OfType<UserPromptEvent>());
+
+        Assert.True(prompt.IsSlashCommand);
+        Assert.Equal(expected, prompt.Text);
+    }
+
+    [Theory]
+    [InlineData("/c/work/app is broken")]
+    [InlineData("/ is the root")]
+    [InlineData("fix /compact handling")]
+    public void KeepsPromptsThatOnlyLookLikeCommands(string text) =>
+        Assert.False(Assert.Single(TranscriptParser.Parse(Transcript.User(text)).OfType<UserPromptEvent>()).IsSlashCommand);
+
+    [Fact]
+    public void SkipsTheCompactionSummary()
+    {
+        const string line = """{"type":"user","isCompactSummary":true,"isVisibleInTranscriptOnly":true,"message":{"role":"user","content":"This session is being continued from a previous conversation."},"timestamp":"2026-10-01T17:19:58.000Z"}""";
+
+        Assert.Empty(TranscriptParser.Parse(line).OfType<UserPromptEvent>());
+    }
+
     [Fact]
     public void ReadsToolResults()
     {

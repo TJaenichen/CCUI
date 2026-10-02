@@ -17,6 +17,9 @@ public abstract record TranscriptEvent(DateTimeOffset Timestamp, string? AgentId
 public sealed record UserPromptEvent(DateTimeOffset Timestamp, string? AgentId, string Text, bool IsSlashCommand)
     : TranscriptEvent(Timestamp, AgentId);
 
+/// <summary>The user cancelled the running turn (Esc). Claude Code logs it as a user message; it is not a prompt.</summary>
+public sealed record InterruptedEvent(DateTimeOffset Timestamp, string? AgentId) : TranscriptEvent(Timestamp, AgentId);
+
 public sealed record AssistantTextEvent(DateTimeOffset Timestamp, string? AgentId, string MessageId, string Text)
     : TranscriptEvent(Timestamp, AgentId);
 

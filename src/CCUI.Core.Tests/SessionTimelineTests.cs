@@ -88,6 +88,25 @@ public sealed class SessionTimelineTests
         Assert.Equal(1, timeline.Statistics.Prompts);
     }
 
+    [Theory]
+    [InlineData("[Request interrupted by user]")]
+    [InlineData("[Request interrupted by user for tool use]")]
+    public void CancellingATurnLeavesTheSessionWaiting(string marker)
+    {
+        // As logged by Claude Code 2.1: the cancelled tool's result, then the marker as a user message. No end_turn follows.
+        var timeline = Feed(
+            Transcript.User("first", "2026-09-27T10:00:00Z"),
+            Transcript.Assistant("m1", Transcript.ToolUse("t1", "Bash", new { command = "sleep 60" }), "2026-09-27T10:00:02Z"),
+            Transcript.ToolResult("t1", "interrupted", isError: true, time: "2026-09-27T10:00:10Z"),
+            Transcript.UserBlocks([new { type = "text", text = marker }], "2026-09-27T10:00:10Z"));
+
+        Assert.Equal(SessionActivity.WaitingForUser, timeline.Statistics.Activity);
+        Assert.Null(timeline.Statistics.TurnStartedAt);
+        Assert.Equal(TimeSpan.FromSeconds(10), timeline.Statistics.LastTurnDuration);
+        Assert.Equal(1, timeline.Statistics.Prompts);
+        Assert.DoesNotContain(timeline.Items, i => i.Kind == TimelineItemKind.Prompt && i.Text == marker);
+    }
+
     [Fact]
     public void ListsSubagentsUntilTheyReturn()
     {

@@ -191,6 +191,17 @@ public sealed class SessionTimeline
 
                     break;
 
+                case InterruptedEvent interrupted:
+                    added.Add(Add(TimelineItemKind.System, interrupted, "Interrupted by user"));
+                    if (interrupted.AgentId is null)
+                    {
+                        // No end_turn follows a cancelled turn, and the Stop hook does not run for it.
+                        TouchTurn(interrupted);
+                        stats = EndTurn(stats) with { Activity = SessionActivity.WaitingForUser };
+                    }
+
+                    break;
+
                 case AssistantTextEvent text:
                     added.Add(Add(TimelineItemKind.Response, text, text.Text, messageId: text.MessageId));
                     stats = stats with { Responses = stats.Responses + (text.AgentId is null ? 1 : 0) };

@@ -11,6 +11,7 @@ namespace CCUI.Core.Claude;
 /// </summary>
 public static partial class TranscriptParser
 {
+    private const string InterruptedPrefix = "[Request interrupted by user";
     private static readonly string[] SyntheticPromptPrefixes = ["<local-command-stdout>", "<local-command-stderr>", "<system-reminder>", "<command-message>", "Caveat:"];
 
     public static IReadOnlyList<TranscriptEvent> Parse(string line)
@@ -158,7 +159,12 @@ public static partial class TranscriptParser
             return;
         }
 
-        if (SlashCommand(text) is { } command)
+        // "[Request interrupted by user]" or "[Request interrupted by user for tool use]".
+        if (text.StartsWith(InterruptedPrefix, StringComparison.Ordinal))
+        {
+            events.Add(new InterruptedEvent(timestamp, agentId));
+        }
+        else if (SlashCommand(text) is { } command)
         {
             events.Add(new UserPromptEvent(timestamp, agentId, command, IsSlashCommand: true));
         }

@@ -23,6 +23,10 @@ public partial class TerminalControl
     private (long Line, int Column)? _selectionEnd;
     private SelectionUnit _selectionUnit;
     private bool _selecting;
+
+    // Where the button went down, and whether the mouse has moved far enough from there to count as a drag.
+    private Point _selectionOrigin;
+    private bool _selectionDragged;
     private int _wheelDelta;
 
     // The link under the mouse while Ctrl is held, in monotonic line numbers like the selection.
@@ -45,7 +49,13 @@ public partial class TerminalControl
     {
         base.OnMouseLeftButtonDown(e);
         Focus();
-        if (Session is null || HitCell(e) is not { } hit)
+        if (Session is null || _surface is null)
+        {
+            return;
+        }
+
+        var point = e.GetPosition(_surface);
+        if (HitCell(point) is not { } hit)
         {
             return;
         }
@@ -58,7 +68,30 @@ public partial class TerminalControl
             return;
         }
 
-        _selectionUnit = e.ClickCount switch
+        BeginSelection(point, e.ClickCount);
+        CaptureMouse();
+        e.Handled = true;
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        UpdateHoverLink(e);
+        if (_selecting && _surface is not null)
+        {
+            ExtendSelection(e.GetPosition(_surface));
+        }
+    }
+
+    /// <summary>The button went down at <paramref name="point"/> (relative to the text surface).</summary>
+    internal void BeginSelection(Point point, int clickCount)
+    {
+        if (HitCell(point) is not { } hit)
+        {
+            return;
+        }
+
+        _selectionUnit = clickCount switch
         {
             2 => SelectionUnit.Word,
             >= 3 => SelectionUnit.Line,
@@ -70,19 +103,32 @@ public partial class TerminalControl
         _selectionAnchorEnd = end;
         _selectionStart = _selectionUnit == SelectionUnit.Character ? null : start;
         _selectionEnd = _selectionUnit == SelectionUnit.Character ? null : end;
+        _selectionOrigin = point;
+        _selectionDragged = _selectionUnit != SelectionUnit.Character;
         _selecting = true;
-        CaptureMouse();
         RenderOverlay();
-        e.Handled = true;
     }
 
-    protected override void OnMouseMove(MouseEventArgs e)
+    /// <summary>The mouse moved to <paramref name="point"/> (relative to the text surface) with the button down.</summary>
+    internal void ExtendSelection(Point point)
     {
-        base.OnMouseMove(e);
-        UpdateHoverLink(e);
-        if (!_selecting || _selectionAnchorStart is not { } anchorStart || _selectionAnchorEnd is not { } anchorEnd || HitCell(e) is not { } hit)
+        if (!_selecting || _selectionAnchorStart is not { } anchorStart || _selectionAnchorEnd is not { } anchorEnd || HitCell(point) is not { } hit)
         {
             return;
+        }
+
+        // A plain click is not a selection: WPF raises MouseMove when the mouse is captured, and a hand rarely holds
+        // perfectly still. Without this, every click selected one cell, and the next Ctrl+C or right-click copied
+        // that cell instead of reaching the application or pasting.
+        if (!_selectionDragged)
+        {
+            var moved = point - _selectionOrigin;
+            if (Math.Abs(moved.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(moved.Y) < SystemParameters.MinimumVerticalDragDistance)
+            {
+                return;
+            }
+
+            _selectionDragged = true;
         }
 
         var (start, end) = Expand(hit);
@@ -100,6 +146,9 @@ public partial class TerminalControl
         RenderOverlay();
     }
 
+    /// <summary>The button was released; the selection (if any) stays.</summary>
+    internal void EndSelection() => _selecting = false;
+
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonUp(e);
@@ -108,7 +157,7 @@ public partial class TerminalControl
             return;
         }
 
-        _selecting = false;
+        EndSelection();
         ReleaseMouseCapture();
         if (HasSelection && CopyOnSelect)
         {

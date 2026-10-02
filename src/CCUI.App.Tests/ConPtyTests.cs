@@ -48,6 +48,27 @@ public sealed class ConPtyTests
         Assert.Equal(0, exitCode);
     }
 
+    [Theory]
+    [InlineData(PseudoConsoleHost.Inbox)]
+    [InlineData(PseudoConsoleHost.Bundled)]
+    public async Task ControlCharactersArriveAsControlKeys(PseudoConsoleHost host)
+    {
+        var environment = WindowsEnvironment.GetFreshUserEnvironment();
+        var powershell = Path.Combine(environment["SystemRoot"], @"System32\WindowsPowerShell\v1.0\powershell.exe");
+
+        var (screen, exitCode) = await Run(
+            host,
+            powershell,
+            ["-NoLogo", "-NoProfile", "-Command", "[Console]::TreatControlCAsInput = $true; while ($true) { $k = [Console]::ReadKey($true); Write-Output ('key:' + $k.Key + ':' + $k.Modifiers + ':' + [int]$k.KeyChar); if ($k.Key -eq 'Q') { break } }"],
+            environment,
+            input: "\x1a\x18\x03q");
+
+        Assert.Contains("key:Z:Control:26", screen, StringComparison.Ordinal);
+        Assert.Contains("key:X:Control:24", screen, StringComparison.Ordinal);
+        Assert.Contains("key:C:Control:3", screen, StringComparison.Ordinal);
+        Assert.Equal(0, exitCode);
+    }
+
     [Fact]
     public void FreshEnvironmentLooksLikeALogon()
     {

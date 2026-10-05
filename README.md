@@ -129,3 +129,7 @@ start sessions with `--dangerously-skip-permissions` on one machine only.
 CCUI is in daily use and under active development; expect rough edges. The transcript format and hooks it
 relies on are Claude Code internals rather than a public contract, so a Claude Code update can call for a CCUI
 update. Issues and pull requests are welcome.
+
+## License
+
+[MIT](LICENSE).

@@ -28,10 +28,13 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
     private SessionTimeline _timeline = new();
     private bool _disposed;
 
+    // How far a transcript prompt may precede its UserPromptSubmit hook: the hook process reports it a little after
+    // Claude Code logged it, and the feed can read the transcript in between.
+    private static readonly TimeSpan LateHookWindow = TimeSpan.FromSeconds(5);
+
     // A prompt was submitted (UserPromptSubmit hook) but the transcript does not show it yet; Claude Code can take
     // a while to write it, so until then the hook decides that the session is working.
     private bool _promptPending;
-    private int _promptsAtSubmit;
 
     public SessionPaneViewModel(string paneId, string workingDirectory, ClaudeSessionRuntime runtime, PaneSettings settings, IUiDispatcher dispatcher, TimeProvider time, string? title = null)
     {
@@ -236,7 +239,8 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
 
         var stats = _timeline.Statistics;
         Stats.Update(stats, _time.GetUtcNow());
-        if (_promptPending && stats.Prompts > _promptsAtSubmit)
+        // The prompt reaching the transcript, or a cancel (which gets no Stop hook), hands back to the transcript.
+        if (events.Any(e => e.AgentId is null && e is UserPromptEvent { IsSlashCommand: false } or InterruptedEvent))
         {
             _promptPending = false;
         }
@@ -288,9 +292,12 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
                 break;
             // Slash commands also fire this hook, but most never reach the model or end with a Stop.
             case "UserPromptSubmit" when !HasExited && TranscriptParser.SlashCommand(hook.Message ?? string.Empty) is null:
-                _promptPending = true;
-                _promptsAtSubmit = _timeline.Statistics.Prompts;
-                Activity = SessionActivity.Working;
+                if (!AlreadyInTranscript(hook))
+                {
+                    _promptPending = true;
+                    Activity = SessionActivity.Working;
+                }
+
                 break;
             case "Stop" when !HasExited:
                 _promptPending = false;
@@ -298,6 +305,13 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
                 break;
         }
     });
+
+    // A late hook for a prompt the transcript already has must not mark it pending again: if that turn was then
+    // cancelled, nothing would ever clear it.
+    private bool AlreadyInTranscript(HookEvent hook) =>
+        hook.ReceivedAt != DateTimeOffset.MinValue
+        && _timeline.LastPromptAt is { } sent
+        && sent >= hook.ReceivedAt - LateHookWindow;
 
     private void OnSessionSwitched(object? sender, string sessionId) => _dispatcher.Post(() =>
     {

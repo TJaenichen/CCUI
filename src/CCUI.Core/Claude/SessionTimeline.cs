@@ -139,6 +139,9 @@ public sealed class SessionTimeline
 
     public string? Title { get; private set; }
 
+    /// <summary>When the latest prompt of the main conversation (not a slash command) was sent.</summary>
+    public DateTimeOffset? LastPromptAt { get; private set; }
+
     public TimelineChanges Apply(IEnumerable<TranscriptEvent> events)
     {
         var added = new List<TimelineItem>();
@@ -179,6 +182,7 @@ public sealed class SessionTimeline
                     if (prompt.AgentId is null && !prompt.IsSlashCommand)
                     {
                         stats = EndTurn(stats);
+                        LastPromptAt = prompt.Timestamp;
                         _turnStart = prompt.Timestamp;
                         _lastEventInTurn = prompt.Timestamp;
                         stats = stats with

@@ -104,7 +104,33 @@ public sealed class ViewModelTests
         Assert.Equal(1, pane.Stats.Prompts);
     }
 
-    private static HookEvent Hook(string name, string? message) => new(name, "s1", null, null, message, DateTimeOffset.MinValue);
+    [Fact]
+    public void AHookArrivingAfterItsPromptDoesNotOutliveACancel()
+    {
+        var pane = Pane(out var feed);
+
+        // The transcript shows the prompt first; the hook process reports it half a second later; then Esc.
+        feed.Push(Transcript.User("long job", "2026-09-27T10:00:00.000Z"));
+        feed.Hook(Hook("UserPromptSubmit", "long job", at: "2026-09-27T10:00:00.500Z"));
+        feed.Push(Transcript.User("[Request interrupted by user]", "2026-09-27T10:00:09.000Z"));
+
+        Assert.Equal(SessionActivity.WaitingForUser, pane.Activity);
+    }
+
+    [Fact]
+    public void ACancelBeforeThePromptIsLoggedEndsTheTurn()
+    {
+        var pane = Pane(out var feed);
+
+        feed.Hook(Hook("UserPromptSubmit", "long job", at: "2026-09-27T10:00:00.000Z"));
+        Assert.Equal(SessionActivity.Working, pane.Activity);
+        feed.Push(Transcript.User("[Request interrupted by user]", "2026-09-27T10:00:03.000Z"));
+
+        Assert.Equal(SessionActivity.WaitingForUser, pane.Activity);
+    }
+
+    private static HookEvent Hook(string name, string? message, string? at = null) =>
+        new(name, "s1", null, null, message, at is null ? DateTimeOffset.MinValue : DateTimeOffset.Parse(at, System.Globalization.CultureInfo.InvariantCulture));
 
     [Fact]
     public void RunningTurnTimeTicks()

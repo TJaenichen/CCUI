@@ -9,6 +9,10 @@ for you or running subagents, how much context each one has used, and every prom
 detail view. Close it and open it again later and everything is back: the sessions, the pane layout and the
 window.
 
+![Four Claude Code sessions tiled in CCUI: session list on the left, per-session stats and activity meters in each pane header, acrylic and a background image behind the terminals](docs/images/screenshot.png)
+
+*Demo mode, so no tokens were spent on this picture.*
+
 ## Why native
 
 - **WPF, not a browser in a frame.** No bundled Chromium, no web renderer per pane. A dozen sessions run in one

@@ -47,7 +47,7 @@ To use it for one run only, start CCUI with `--Claude:Arguments:0=--dangerously-
 - `Arguments`: extra arguments for every session, e.g. `["--model", "opus"]`.
 - `FreshEnvironment`: start from a fresh logon environment rather than CCUI's own.
 - `RemoveEnvironmentVariables` / `SetEnvironmentVariables`: applied on top.
-- `UseSessionHooks`: registers the hooks that let a pane follow `/clear` and see "waiting for you" notifications.
+- `UseSessionHooks`: registers the hooks that let a pane follow `/clear`, show "working" as soon as a prompt is sent, and see "waiting for you" notifications.
 - `PseudoConsole`: `Auto`, `Bundled` or `Inbox`.
 - `ContextWindowTokens`: denominator of the context-used percentage (use 1000000 for 1M-context models).
 

@@ -58,6 +58,55 @@ public sealed class ViewModelTests
     }
 
     [Fact]
+    public void ASubmittedPromptShowsWorkingBeforeTheTranscriptHasIt()
+    {
+        var pane = Pane(out var feed);
+        feed.Push(
+            Transcript.User("first", "2026-09-27T10:00:00Z"),
+            Transcript.Assistant("m1", Transcript.Text("done"), "2026-09-27T10:00:04Z", stop: "end_turn"));
+        Assert.Equal(SessionActivity.WaitingForUser, pane.Activity);
+
+        feed.Hook(Hook("UserPromptSubmit", "second"));
+        Assert.Equal(SessionActivity.Working, pane.Activity);
+
+        // Unrelated transcript lines do not undo it; the prompt arriving hands over to the transcript.
+        feed.Push(Transcript.Assistant("m1", Transcript.Text("late line"), "2026-09-27T10:00:05Z", stop: "end_turn"));
+        Assert.Equal(SessionActivity.Working, pane.Activity);
+        feed.Push(
+            Transcript.User("second", "2026-09-27T10:01:00Z"),
+            Transcript.Assistant("m2", Transcript.Text("ok"), "2026-09-27T10:01:30Z", stop: "end_turn"));
+        Assert.Equal(SessionActivity.WaitingForUser, pane.Activity);
+    }
+
+    [Theory]
+    [InlineData("/compact")]
+    [InlineData("<command-name>/model</command-name>")]
+    public void SubmittedSlashCommandsDoNotStartATurn(string prompt)
+    {
+        var pane = Pane(out var feed);
+
+        feed.Hook(Hook("UserPromptSubmit", prompt));
+
+        Assert.NotEqual(SessionActivity.Working, pane.Activity);
+    }
+
+    [Fact]
+    public void AnInterruptedTurnEnds()
+    {
+        var pane = Pane(out var feed);
+
+        feed.Push(
+            Transcript.User("long job", "2026-09-27T10:00:00Z"),
+            Transcript.Assistant("m1", Transcript.ToolUse("t1", "Bash", new { command = "sleep 100" }), "2026-09-27T10:00:02Z"),
+            Transcript.User("[Request interrupted by user for tool use]", "2026-09-27T10:00:09Z"));
+
+        Assert.Equal(SessionActivity.WaitingForUser, pane.Activity);
+        Assert.Equal(1, pane.Stats.Prompts);
+    }
+
+    private static HookEvent Hook(string name, string? message) => new(name, "s1", null, null, message, DateTimeOffset.MinValue);
+
+    [Fact]
     public void RunningTurnTimeTicks()
     {
         var pane = Pane(out var feed);

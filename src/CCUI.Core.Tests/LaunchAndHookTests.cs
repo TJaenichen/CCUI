@@ -58,7 +58,7 @@ public sealed class LaunchAndHookTests : IDisposable
         var json = HookEnvironment.BuildSettingsJson(@"C:\Program Files\CCUI\CCUI.exe");
 
         Assert.Contains("\\\"C:/Program Files/CCUI/CCUI.exe\\\" --hook", json, StringComparison.Ordinal);
-        foreach (var name in new[] { "SessionStart", "Notification", "Stop" })
+        foreach (var name in new[] { "SessionStart", "UserPromptSubmit", "Notification", "Stop" })
         {
             Assert.Contains($"\"{name}\"", json, StringComparison.Ordinal);
         }

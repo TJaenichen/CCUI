@@ -28,6 +28,11 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
     private SessionTimeline _timeline = new();
     private bool _disposed;
 
+    // A prompt was submitted (UserPromptSubmit hook) but the transcript does not show it yet; Claude Code can take
+    // a while to write it, so until then the hook decides that the session is working.
+    private bool _promptPending;
+    private int _promptsAtSubmit;
+
     public SessionPaneViewModel(string paneId, string workingDirectory, ClaudeSessionRuntime runtime, PaneSettings settings, IUiDispatcher dispatcher, TimeProvider time, string? title = null)
     {
         PaneId = paneId;
@@ -231,9 +236,14 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
 
         var stats = _timeline.Statistics;
         Stats.Update(stats, _time.GetUtcNow());
+        if (_promptPending && stats.Prompts > _promptsAtSubmit)
+        {
+            _promptPending = false;
+        }
+
         if (!HasExited)
         {
-            Activity = stats.Activity;
+            Activity = _promptPending ? SessionActivity.Working : stats.Activity;
         }
 
         GitBranch = _timeline.GitBranch ?? GitBranch;
@@ -276,7 +286,14 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
                 AttentionMessage = hook.Message;
                 NeedsAttention = !IsActive;
                 break;
+            // Slash commands also fire this hook, but most never reach the model or end with a Stop.
+            case "UserPromptSubmit" when !HasExited && TranscriptParser.SlashCommand(hook.Message ?? string.Empty) is null:
+                _promptPending = true;
+                _promptsAtSubmit = _timeline.Statistics.Prompts;
+                Activity = SessionActivity.Working;
+                break;
             case "Stop" when !HasExited:
+                _promptPending = false;
                 Activity = SessionActivity.WaitingForUser;
                 break;
         }
@@ -287,6 +304,7 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
         // /clear started a new conversation in the same pane.
         SessionId = sessionId;
         _timeline = new SessionTimeline();
+        _promptPending = false;
         Detail.Clear();
         Agents.Clear();
         Stats.Update(_timeline.Statistics, _time.GetUtcNow());

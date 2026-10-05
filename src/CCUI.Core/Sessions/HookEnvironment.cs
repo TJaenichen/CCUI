@@ -6,14 +6,15 @@ namespace CCUI.Core.Sessions;
 
 /// <summary>
 /// The hook plumbing: a settings file passed to claude with --settings that runs "CCUI.exe --hook" on
-/// SessionStart, Notification and Stop. The hook process appends what Claude sent to a per-pane file, which the
-/// pane's feed tails. That is how a pane learns its new session id after /clear and when Claude waits for input.
+/// SessionStart, UserPromptSubmit, Notification and Stop. The hook process appends what Claude sent to a per-pane
+/// file, which the pane's feed tails. That is how a pane learns its new session id after /clear, that a prompt was
+/// sent (before the transcript shows it), and when Claude waits for input.
 /// </summary>
 public sealed class HookEnvironment
 {
     public const string HookArgument = "--hook";
 
-    private static readonly string[] Events = ["SessionStart", "Notification", "Stop"];
+    private static readonly string[] Events = ["SessionStart", "UserPromptSubmit", "Notification", "Stop"];
 
     public HookEnvironment(string directory, string executablePath)
     {
@@ -96,6 +97,7 @@ public sealed class HookEnvironment
 }
 
 /// <summary>A hook callback as recorded by <see cref="HookEnvironment.Relay"/>.</summary>
+/// <param name="Message">The notification text (Notification) or the submitted prompt (UserPromptSubmit).</param>
 public sealed record HookEvent(string EventName, string? SessionId, string? TranscriptPath, string? Source, string? Message, DateTimeOffset ReceivedAt)
 {
     public static HookEvent? Parse(string line)
@@ -112,7 +114,7 @@ public sealed record HookEvent(string EventName, string? SessionId, string? Tran
             string? Get(JsonElement e, string name) => e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
             var received = Get(root, "receivedAt") is { } r && DateTimeOffset.TryParse(r, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var t) ? t : DateTimeOffset.MinValue;
             return Get(payload, "hook_event_name") is { } name
-                ? new HookEvent(name, Get(payload, "session_id"), Get(payload, "transcript_path"), Get(payload, "source"), Get(payload, "message"), received)
+                ? new HookEvent(name, Get(payload, "session_id"), Get(payload, "transcript_path"), Get(payload, "source"), Get(payload, "message") ?? Get(payload, "prompt"), received)
                 : null;
         }
         catch (JsonException)

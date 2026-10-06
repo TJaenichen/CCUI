@@ -69,6 +69,8 @@ window.
 - In the terminal: `Ctrl+C` copies a selection and interrupts otherwise, `Ctrl+Shift+C` always copies, `Ctrl+V`
   pastes (bracketed when Claude asks for it), right-click copies or pastes, `Shift+Enter` inserts a newline, and
   `Ctrl+click` opens a URL. Extra chords can be mapped to any text with `SendKeys`.
+- Drop files on a terminal, or paste files copied in Explorer, and their paths go to Claude Code, which attaches
+  images and references other files. An image on the clipboard pastes through Claude Code's own image paste.
 
 ### Save and restore
 

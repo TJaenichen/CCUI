@@ -79,3 +79,8 @@ animations"; not the default because Remote Desktop sessions report animations a
 
 Ctrl+C copies when text is selected and sends ^C otherwise; Ctrl+Shift+C always copies; Ctrl+V pastes (bracketed
 when the app asks for it); right-click copies a selection or pastes; Shift+PageUp/PageDown scroll.
+
+Pasting and dropping follow Windows Terminal: text is pasted as typed; files copied in Explorer or dropped on the
+terminal are pasted as their paths, space-separated and quoted when they contain spaces, which Claude Code turns
+into attachments (`[Image #1]`) or file references; an image alone on the clipboard is passed on as Alt+V, Claude
+Code's own image paste on Windows.

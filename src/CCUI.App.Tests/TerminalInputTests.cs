@@ -83,6 +83,32 @@ public sealed class TerminalInputTests(WpfFixture wpf)
         });
     }
 
+    [Fact(Timeout = 60_000)]
+    public Task PastesFilesAsQuotedPathsAndImagesAsAltV()
+    {
+        var cancel = TestContext.Current.CancellationToken;
+        return wpf.Run(async () =>
+        {
+            using var host = await Host.Create(cancel);
+
+            // Files copied in Explorer or dropped on the terminal: paths, quoted when they contain spaces.
+            host.Control.Paste(new DataObject(DataFormats.FileDrop, new[] { @"C:\shots\My Screen.png", @"D:\work\notes.md" }));
+            Assert.Equal("\"C:\\shots\\My Screen.png\" D:\\work\\notes.md", host.Connection.Sent);
+
+            // Text wins over everything else.
+            var both = new DataObject();
+            both.SetData(DataFormats.UnicodeText, "typed");
+            both.SetData(DataFormats.FileDrop, new[] { @"C:\x.txt" });
+            host.Control.Paste(both);
+            Assert.EndsWith("typed", host.Connection.Sent);
+
+            // An image alone: Alt+V, so Claude Code reads the image from the clipboard itself.
+            var pixel = System.Windows.Media.Imaging.BitmapSource.Create(1, 1, 96, 96, System.Windows.Media.PixelFormats.Bgr32, null, new byte[4], 4);
+            host.Control.Paste(new DataObject(DataFormats.Bitmap, pixel));
+            Assert.EndsWith("\ev", host.Connection.Sent);
+        });
+    }
+
     /// <summary>Marks Ctrl as held on this thread until disposed.</summary>
     private static ControlHeld HoldControl() => new();
 

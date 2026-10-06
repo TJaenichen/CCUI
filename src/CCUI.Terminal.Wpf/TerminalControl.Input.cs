@@ -35,10 +35,10 @@ public partial class TerminalControl
 
     public void PasteFromClipboard()
     {
-        string text;
+        IDataObject? data;
         try
         {
-            text = Clipboard.ContainsText() ? Clipboard.GetText() : string.Empty;
+            data = Clipboard.GetDataObject();
         }
         catch (COMException ex)
         {
@@ -46,15 +46,62 @@ public partial class TerminalControl
             return;
         }
 
-        if (text.Length > 0 && Session is { } session)
+        Paste(data);
+    }
+
+    /// <summary>
+    /// Pastes what the clipboard or a drop holds: text as typed input; files (copied in Explorer, or dropped) as
+    /// their paths, quoted when needed, the way Windows Terminal inserts them; an image alone as Alt+V, which asks
+    /// Claude Code to take the image from the clipboard itself.
+    /// </summary>
+    internal void Paste(IDataObject? data)
+    {
+        if (data is null || Session is not { } session)
         {
-            Debug.WriteLine($"Terminal paste: {text.Length} characters, bracketed={session.Emulator.Modes.BracketedPaste}");
-            SendInput(KeyEncoder.EncodePaste(text, session.Emulator.Modes.BracketedPaste));
+            return;
+        }
+
+        var bracketed = session.Emulator.Modes.BracketedPaste;
+        if (data.GetDataPresent(DataFormats.UnicodeText) && data.GetData(DataFormats.UnicodeText) is string { Length: > 0 } text)
+        {
+            Debug.WriteLine($"Terminal paste: {text.Length} characters, bracketed={bracketed}");
+            SendInput(KeyEncoder.EncodePaste(text, bracketed));
+        }
+        else if (data.GetDataPresent(DataFormats.FileDrop) && data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } files)
+        {
+            Debug.WriteLine($"Terminal paste: {files.Length} file(s)");
+            SendInput(KeyEncoder.EncodePaste(FormatPaths(files), bracketed));
+        }
+        else if (data.GetDataPresent(DataFormats.Bitmap))
+        {
+            Debug.WriteLine("Terminal paste: image, forwarding Alt+V");
+            SendInput(KeyEncoder.EncodeText("v", alt: true));
         }
         else
         {
-            Debug.WriteLine("Terminal paste: clipboard has no text");
+            Debug.WriteLine("Terminal paste: nothing usable (" + string.Join(", ", data.GetFormats()) + ")");
         }
+    }
+
+    /// <summary>Paths separated by spaces, each in double quotes when it contains whitespace.</summary>
+    internal static string FormatPaths(IEnumerable<string> paths) =>
+        string.Join(' ', paths.Select(p => p.Any(char.IsWhiteSpace) ? '"' + p + '"' : p));
+
+    protected override void OnDragOver(DragEventArgs e)
+    {
+        base.OnDragOver(e);
+        e.Effects = Session is not null && (e.Data.GetDataPresent(DataFormats.FileDrop) || e.Data.GetDataPresent(DataFormats.UnicodeText))
+            ? DragDropEffects.Copy
+            : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    protected override void OnDrop(DragEventArgs e)
+    {
+        base.OnDrop(e);
+        Focus();
+        Paste(e.Data);
+        e.Handled = true;
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

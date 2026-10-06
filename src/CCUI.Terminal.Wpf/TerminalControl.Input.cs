@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
@@ -13,6 +14,7 @@ public partial class TerminalControl
         var text = SelectedText();
         if (string.IsNullOrEmpty(text))
         {
+            Debug.WriteLine("Terminal copy: nothing selected");
             return false;
         }
 
@@ -20,12 +22,14 @@ public partial class TerminalControl
         {
             Clipboard.SetText(text);
         }
-        catch (COMException)
+        catch (COMException ex)
         {
             // The clipboard is held by another process; the copy is lost, as in other terminals.
+            Debug.WriteLine($"Terminal copy failed: {ex.Message}");
             return false;
         }
 
+        Debug.WriteLine($"Terminal copy: {text.Length} characters");
         return true;
     }
 
@@ -36,14 +40,20 @@ public partial class TerminalControl
         {
             text = Clipboard.ContainsText() ? Clipboard.GetText() : string.Empty;
         }
-        catch (COMException)
+        catch (COMException ex)
         {
+            Debug.WriteLine($"Terminal paste failed: {ex.Message}");
             return;
         }
 
         if (text.Length > 0 && Session is { } session)
         {
+            Debug.WriteLine($"Terminal paste: {text.Length} characters, bracketed={session.Emulator.Modes.BracketedPaste}");
             SendInput(KeyEncoder.EncodePaste(text, session.Emulator.Modes.BracketedPaste));
+        }
+        else
+        {
+            Debug.WriteLine("Terminal paste: clipboard has no text");
         }
     }
 

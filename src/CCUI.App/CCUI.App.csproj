@@ -6,6 +6,7 @@
     <AssemblyName>CCUI</AssemblyName>
     <RootNamespace>CCUI.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\ccui.ico</ApplicationIcon>
     <!-- Program.Main handles the hook relay before WPF starts. -->
     <StartupObject>CCUI.App.Program</StartupObject>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -13,6 +14,9 @@
     <ConptyRequiresx64Host>true</ConptyRequiresx64Host>
     <ConptyRequiresARM64Host>true</ConptyRequiresARM64Host>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\ccui.ico" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Dirkster.AvalonDock" />
     <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" />

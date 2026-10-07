@@ -45,7 +45,34 @@ public partial class SessionPaneView : UserControl
         {
             current.PropertyChanged += OnViewModelPropertyChanged;
             current.FocusRequested += OnFocusRequested;
+
+            // A new session is already the active pane before its view exists, so no IsActive change will arrive:
+            // take the keyboard once the view is in the tree (after the docking layout has placed it).
+            if (current.IsActive)
+            {
+                FocusWhenLoaded();
+            }
         }
+    }
+
+    private void FocusWhenLoaded()
+    {
+        if (IsLoaded)
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, FocusTerminal);
+            return;
+        }
+
+        RoutedEventHandler? onLoaded = null;
+        onLoaded = (_, _) =>
+        {
+            Loaded -= onLoaded;
+            if (ViewModel is { IsActive: true })
+            {
+                Dispatcher.BeginInvoke(DispatcherPriority.Background, FocusTerminal);
+            }
+        };
+        Loaded += onLoaded;
     }
 
     // Deferred so it runs after whatever took focus with the click (e.g. the docking tab).

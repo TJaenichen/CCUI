@@ -20,7 +20,14 @@ public sealed record SessionSummary
 
     public string? LastPrompt { get; init; }
 
+    /// <summary>
+    /// When the conversation last moved: the latest user or assistant line. Housekeeping lines Claude Code appends
+    /// later (the away recap, titles, cost state) do not count, so the session list does not reorder on them.
+    /// </summary>
     public DateTimeOffset LastActive { get; init; }
+
+    /// <summary>When the transcript file was last written, housekeeping included.</summary>
+    public DateTimeOffset LastWrite { get; init; }
 
     public long Length { get; init; }
 

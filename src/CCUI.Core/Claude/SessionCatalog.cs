@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace CCUI.Core.Claude;
@@ -53,7 +54,7 @@ public sealed class SessionCatalog(ClaudePaths paths, TimeProvider time) : ISess
             }
         }
 
-        return [.. results.OrderByDescending(s => s.LastActive)];
+        return [.. results.OrderByDescending(s => s.LastActive).ThenByDescending(s => s.LastWrite)];
     }
 
     private IEnumerable<FileInfo> EnumerateTranscripts()
@@ -96,6 +97,7 @@ public sealed class SessionCatalog(ClaudePaths paths, TimeProvider time) : ISess
         private readonly TranscriptReader _reader = new(path);
         private long _length = -1;
         private DateTime _lastWrite;
+        private DateTimeOffset? _lastConversation;
 
         public SessionSummary Summary { get; private set; } = new()
         {
@@ -113,11 +115,12 @@ public sealed class SessionCatalog(ClaudePaths paths, TimeProvider time) : ISess
             if (file.Length < _length)
             {
                 Summary = Summary with { Title = null, FirstPrompt = null, LastPrompt = null, WorkingDirectory = null };
+                _lastConversation = null;
             }
 
             _length = file.Length;
             _lastWrite = file.LastWriteTimeUtc;
-            Summary = Summary with { LastActive = new DateTimeOffset(file.LastWriteTimeUtc, TimeSpan.Zero), Length = file.Length };
+            var lastWrite = new DateTimeOffset(file.LastWriteTimeUtc, TimeSpan.Zero);
 
             string? lastMetadataLine = null;
             foreach (var line in _reader.ReadNewLines())
@@ -125,6 +128,13 @@ public sealed class SessionCatalog(ClaudePaths paths, TimeProvider time) : ISess
                 if (line.Contains("\"gitBranch\"", StringComparison.Ordinal))
                 {
                     lastMetadataLine = line;
+                }
+
+                if ((line.Contains("\"type\":\"user\"", StringComparison.Ordinal) || line.Contains("\"type\":\"assistant\"", StringComparison.Ordinal))
+                    && Decode(line, "timestamp") is { } stamp
+                    && DateTimeOffset.TryParse(stamp, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var at))
+                {
+                    _lastConversation = at;
                 }
 
                 if (line.Contains("\"custom-title\"", StringComparison.Ordinal) && Decode(line, "customTitle") is { Length: > 0 } title)
@@ -151,6 +161,8 @@ public sealed class SessionCatalog(ClaudePaths paths, TimeProvider time) : ISess
             {
                 ApplyMetadata(lastMetadataLine);
             }
+
+            Summary = Summary with { LastActive = _lastConversation ?? lastWrite, LastWrite = lastWrite, Length = file.Length };
         }
 
         private static string? Decode(string line, string property)

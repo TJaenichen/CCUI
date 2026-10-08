@@ -10,11 +10,11 @@ public static class RebootDetector
     public static IReadOnlySet<string> FindKilled(IEnumerable<SessionSummary> sessions, DateTimeOffset bootTime, TimeSpan lookBack)
     {
         var candidates = sessions
-            .Where(s => s.LastActive <= bootTime && s.LastActive >= bootTime - lookBack)
+            .Where(s => s.LastWrite <= bootTime && s.LastWrite >= bootTime - lookBack)
             .ToList();
 
         var group = candidates
-            .GroupBy(s => s.LastActive.UtcTicks / TimeSpan.TicksPerSecond)
+            .GroupBy(s => s.LastWrite.UtcTicks / TimeSpan.TicksPerSecond)
             .Where(g => g.Count() >= 2)
             .OrderByDescending(g => g.Count())
             .ThenByDescending(g => g.Key)

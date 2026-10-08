@@ -29,5 +29,5 @@ public sealed class RebootDetectorTests
         Assert.Empty(RebootDetector.FindKilled([Session("a", Boot.AddMinutes(-1))], Boot, TimeSpan.FromHours(24)));
     }
 
-    private static SessionSummary Session(string id, DateTimeOffset lastActive) => new() { SessionId = id, TranscriptPath = id, LastActive = lastActive };
+    private static SessionSummary Session(string id, DateTimeOffset lastWrite) => new() { SessionId = id, TranscriptPath = id, LastActive = lastWrite, LastWrite = lastWrite };
 }

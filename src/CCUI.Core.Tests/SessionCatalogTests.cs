@@ -72,6 +72,25 @@ public sealed class SessionCatalogTests : IDisposable
     }
 
     [Fact]
+    public void HousekeepingLinesDoNotCountAsActivity()
+    {
+        // Minutes after a turn, Claude Code appends an "away" recap (and titles, cost state, …) to the transcript.
+        // The file is newer, but the conversation is not, so the list must not move the session to the top.
+        const string recap = """{"type":"system","subtype":"away_summary","content":"recap: …","timestamp":"2026-09-27T10:20:00.000Z"}""";
+        var path = Write("p", Transcript.SessionId,
+            Transcript.User("one", "2026-09-27T10:00:00Z"),
+            Transcript.Assistant("m1", Transcript.Text("done"), "2026-09-27T10:05:00Z", stop: "end_turn"),
+            recap);
+        var written = new DateTime(2026, 9, 27, 10, 20, 0, DateTimeKind.Utc);
+        File.SetLastWriteTimeUtc(path, written);
+
+        var summary = Assert.Single(Catalog().Scan(TimeSpan.FromDays(365)));
+
+        Assert.Equal(new DateTimeOffset(2026, 9, 27, 10, 5, 0, TimeSpan.Zero), summary.LastActive);
+        Assert.Equal(new DateTimeOffset(written), summary.LastWrite);
+    }
+
+    [Fact]
     public void FindsTranscriptsByProjectFolderOrSearch()
     {
         var paths = new ClaudePaths(_home);

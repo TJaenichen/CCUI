@@ -205,6 +205,7 @@ public sealed partial class SessionListViewModel : ObservableObject
             .Where(i => filter.Length == 0 || Matches(i, filter))
             .OrderByDescending(i => i.IsOpen)
             .ThenByDescending(i => i.LastActive)
+            .ThenByDescending(i => i.Summary.LastWrite)
             .ToList();
 
         // Update in place so selection and tree expansion survive refreshes.

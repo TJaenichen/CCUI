@@ -22,6 +22,7 @@
     <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" />
     <PackageReference Include="Microsoft.Windows.Console.ConPTY" GeneratePathProperty="true" />
     <PackageReference Include="System.Management" />
+    <PackageReference Include="Velopack" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CCUI.Core\CCUI.Core.csproj" />

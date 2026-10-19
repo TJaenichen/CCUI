@@ -207,6 +207,23 @@ public sealed class WorkspaceOptions
     public int LaunchStaggerMilliseconds { get; set; } = 800;
 }
 
+/// <summary>Where new versions come from and how often to look. Section "Update".</summary>
+public sealed class UpdateOptions
+{
+    public const string Section = "Update";
+
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>A GitHub repository (its Releases page), or a folder or web address holding Velopack packages.</summary>
+    public string Source { get; set; } = "https://github.com/TJaenichen/CCUI";
+
+    /// <summary>Hours between checks; the first check runs shortly after start.</summary>
+    public double CheckHours { get; set; } = 4;
+
+    /// <summary>Also pick up GitHub pre-releases.</summary>
+    public bool Prerelease { get; set; }
+}
+
 /// <summary>Demo mode replays scripted sessions instead of running Claude. Section "Demo".</summary>
 public sealed class DemoOptions
 {

@@ -69,6 +69,12 @@ public partial class MainWindow : Window
             }
         };
         Closing += OnClosing;
+        shell.RestartRequested += (_, _) =>
+        {
+            // The user already confirmed; the update applies once the process has exited.
+            _closeConfirmed = true;
+            Close();
+        };
         StateChanged += (_, _) => Root.Margin = WindowState == WindowState.Maximized ? MaximizedInset() : default;
     }
 

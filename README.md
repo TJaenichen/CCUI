@@ -84,7 +84,18 @@ window.
 Four scripted sessions that look and behave like Claude Code (colours, box drawing, emoji, spinner, status
 line, transcript events), so you can try the whole UI without running Claude or spending tokens.
 
-## Run it
+## Install it
+
+Download `CCUI.App-win-Setup.exe` from the [latest release](https://github.com/TJaenichen/CCUI/releases/latest) and
+run it. It installs per user (no admin rights), adds a Start menu entry, and bundles the .NET runtime. Installed
+copies check GitHub for new versions a few times a day, download them in the background, and show an
+**Update to x.y.z** chip in the title bar; one click restarts CCUI into the new version with the same sessions
+open. Updates are deltas, so they are small. Windows SmartScreen may warn on the first install because the
+installer is not code-signed; "More info" then "Run anyway" gets past it.
+
+A portable zip is published with every release too, for running without an installer (no automatic updates).
+
+## Run it from source
 
 Requires Windows 10/11 and the .NET 10 SDK. Visual Studio 2026 is optional.
 

@@ -2,6 +2,7 @@ using CCUI.Core.Claude;
 using CCUI.Core.Sessions;
 using CCUI.Core.Settings;
 using CCUI.Core.Threading;
+using CCUI.Core.Updates;
 using CCUI.Core.ViewModels;
 using CCUI.Core.Workspace;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -12,12 +13,13 @@ namespace CCUI.App.Tests;
 internal static class TestShell
 {
     public static ShellViewModel Create() => new(
-        new ShellServices(new NoLauncher(), new NoCatalog(), new NoStore(), new ImmediateDispatcher(), new NoDialogs(), new NoClipboard(), new NoClaudeProcesses(), TimeProvider.System, NullLogger<ShellViewModel>.Instance),
+        new ShellServices(new NoLauncher(), new NoCatalog(), new NoStore(), new ImmediateDispatcher(), new NoDialogs(), new NoClipboard(), new NoClaudeProcesses(), new NoAppUpdater("0.0.0"), TimeProvider.System, NullLogger<ShellViewModel>.Instance),
         Options.Create(new ClaudeOptions()),
         Options.Create(new SessionListOptions()),
         Options.Create(new WorkspaceOptions { AutoSaveSeconds = 0 }),
         Options.Create(new AppearanceOptions()),
-        Options.Create(new DemoOptions()));
+        Options.Create(new DemoOptions()),
+        Options.Create(new UpdateOptions()));
 
     private sealed class NoLauncher : ISessionLauncher
     {

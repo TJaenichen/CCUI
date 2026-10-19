@@ -3,6 +3,7 @@ using CCUI.Core.Sessions;
 using CCUI.Core.Settings;
 using CCUI.Core.Tests.Fixtures;
 using CCUI.Core.Threading;
+using CCUI.Core.Updates;
 using CCUI.Core.ViewModels;
 using CCUI.Core.Workspace;
 using CCUI.Terminal;
@@ -380,13 +381,86 @@ public sealed class ViewModelTests
         return pane;
     }
 
-    private ShellViewModel Shell() => new(
-        new ShellServices(_launcher, new EmptyCatalog(), _store, new ImmediateDispatcher(), _dialogs, new NullClipboard(), new NoClaudeProcesses(), _time, NullLogger<ShellViewModel>.Instance),
+    [Fact]
+    public async Task ADownloadedUpdateIsOfferedAndAppliedOnRestart()
+    {
+        var updater = new FakeUpdater { Available = "0.2.0" };
+        var shell = Shell(updater);
+        var restarts = 0;
+        shell.RestartRequested += (_, _) => restarts++;
+        await shell.StartAsync(null);
+        Assert.False(shell.HasUpdate);
+
+        // The first check runs shortly after start; the version is downloaded before it is offered.
+        _time.Advance(TimeSpan.FromSeconds(30));
+        await Task.Yield();
+
+        Assert.Equal(("0.2.0", "Update to 0.2.0", 1), (shell.ReadyUpdate, shell.UpdateText, updater.Downloads));
+        Assert.True(shell.RestartToUpdateCommand.CanExecute(null));
+
+        _dialogs.ConfirmResult = false;
+        shell.RestartToUpdateCommand.Execute(null);
+        Assert.Equal((0, 0), (updater.Applied, restarts));
+
+        _dialogs.ConfirmResult = true;
+        shell.RestartToUpdateCommand.Execute(null);
+        Assert.Equal((1, 1), (updater.Applied, restarts));
+        Assert.Contains("0.2.0", _dialogs.Confirmations[^1]);
+        await shell.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task AnUninstalledCopyNeverChecksForUpdates()
+    {
+        var updater = new FakeUpdater { Available = "0.2.0", IsInstalled = false };
+        var shell = Shell(updater);
+        await shell.StartAsync(null);
+
+        _time.Advance(TimeSpan.FromHours(10));
+        await Task.Yield();
+
+        Assert.Equal((0, false), (updater.Checks, shell.HasUpdate));
+        Assert.Contains("no updates", shell.VersionText);
+        await shell.DisposeAsync();
+    }
+
+    private ShellViewModel Shell(IAppUpdater? updater = null) => new(
+        new ShellServices(_launcher, new EmptyCatalog(), _store, new ImmediateDispatcher(), _dialogs, new NullClipboard(), new NoClaudeProcesses(), updater ?? new NoAppUpdater("0.1.0"), _time, NullLogger<ShellViewModel>.Instance),
         Options.Create(new ClaudeOptions()),
         Options.Create(new SessionListOptions()),
         Options.Create(new WorkspaceOptions { LaunchStaggerMilliseconds = 0, AutoSaveSeconds = 0 }),
         Options.Create(new AppearanceOptions()),
-        Options.Create(new DemoOptions()));
+        Options.Create(new DemoOptions()),
+        Options.Create(new UpdateOptions()));
+
+    private sealed class FakeUpdater : IAppUpdater
+    {
+        public string? Available { get; set; }
+
+        public bool IsInstalled { get; set; } = true;
+
+        public int Checks { get; private set; }
+
+        public int Downloads { get; private set; }
+
+        public int Applied { get; private set; }
+
+        public string CurrentVersion => "0.1.0";
+
+        public Task<string?> CheckAsync(CancellationToken cancellationToken)
+        {
+            Checks++;
+            return Task.FromResult(Available);
+        }
+
+        public Task DownloadAsync(IProgress<int>? progress, CancellationToken cancellationToken)
+        {
+            Downloads++;
+            return Task.CompletedTask;
+        }
+
+        public void RestartToApply() => Applied++;
+    }
 
     private sealed class FakeLauncher : ISessionLauncher
     {

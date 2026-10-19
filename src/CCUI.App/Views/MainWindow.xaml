@@ -104,11 +104,29 @@
                                   Content="{StaticResource IconMenu}" IsChecked="{Binding IsSessionListVisible}" ToolTip="Session list (Ctrl+Shift+B)" />
                     <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontFamily="{StaticResource MonoFont}" FontSize="13"
                                Foreground="{DynamicResource AccentBrush}" Text="▐▛█▜▌" />
-                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="CCUI" />
+                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="CCUI" ToolTip="{Binding VersionText}" />
                     <Border Style="{StaticResource ChipStyle}" Margin="10,0,0,0" Background="{DynamicResource AccentSoftBrush}"
                             Visibility="{Binding IsDemo, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock FontSize="11" Foreground="{DynamicResource AccentBrush}" Text="demo" />
                     </Border>
+                    <!-- Shown once a new version has been downloaded; one click restarts into it. -->
+                    <Button Margin="10,0,0,0" WindowChrome.IsHitTestVisibleInChrome="True" Cursor="Hand" Focusable="False"
+                            Command="{Binding RestartToUpdateCommand}" ToolTip="Downloaded and ready. Click to restart CCUI and update."
+                            Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibility}}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bg" Style="{StaticResource ChipStyle}" Margin="0" Background="{DynamicResource AccentSoftBrush}">
+                                    <TextBlock x:Name="Label" FontSize="11" Foreground="{DynamicResource AccentBrush}" Text="{Binding UpdateText}" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                        <Setter TargetName="Label" Property="Foreground" Value="White" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                     <Button Margin="14,0,0,0" Style="{StaticResource IconButtonStyle}" WindowChrome.IsHitTestVisibleInChrome="True"
                             Content="{StaticResource IconAdd}" Command="{Binding NewSessionCommand}" ToolTip="New session (Ctrl+Shift+T)" />
                     <Button Style="{StaticResource IconButtonStyle}" WindowChrome.IsHitTestVisibleInChrome="True" Click="OnTileClick"

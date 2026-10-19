@@ -6,6 +6,7 @@ using CCUI.Core.Demo;
 using CCUI.Core.Sessions;
 using CCUI.Core.Settings;
 using CCUI.Core.Threading;
+using CCUI.Core.Updates;
 using CCUI.Core.ViewModels;
 using CCUI.Core.Workspace;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +42,7 @@ public static class AppHost
         services.Configure<KeyBindingOptions>(builder.Configuration.GetSection(KeyBindingOptions.Section));
         services.Configure<WorkspaceOptions>(builder.Configuration.GetSection(WorkspaceOptions.Section));
         services.Configure<DemoOptions>(builder.Configuration.GetSection(DemoOptions.Section));
+        services.Configure<UpdateOptions>(builder.Configuration.GetSection(UpdateOptions.Section));
 
         var demo = builder.Configuration.GetValue<bool>($"{DemoOptions.Section}:{nameof(DemoOptions.Enabled)}");
 
@@ -59,9 +61,11 @@ public static class AppHost
             services.AddSingleton<ISessionCatalog, DemoSessionCatalog>();
             services.AddSingleton<ISessionLauncher, DemoSessionLauncher>();
             services.AddSingleton<IClaudeProcessProbe, NoClaudeProcesses>();
+            services.AddSingleton<IAppUpdater>(new NoAppUpdater(VelopackUpdater.AssemblyVersion));
         }
         else
         {
+            services.AddSingleton<IAppUpdater, VelopackUpdater>();
             services.AddSingleton(_ => new HookEnvironment(Path.Combine(DataDirectory, "hooks"), Environment.ProcessPath!));
             services.AddSingleton<ISessionCatalog, SessionCatalog>();
             services.AddSingleton<ISessionLauncher, ClaudeSessionLauncher>();

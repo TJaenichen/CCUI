@@ -7,6 +7,7 @@
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Windows.Console.ConPTY" Version="1.24.260710001" />
     <PackageVersion Include="System.Management" Version="10.0.12" />
+    <PackageVersion Include="Velopack" Version="1.2.161" />
     <!-- Terminal -->
     <PackageVersion Include="Vortice.Direct2D1" Version="3.8.3" />
     <PackageVersion Include="Wcwidth" Version="4.0.1" />

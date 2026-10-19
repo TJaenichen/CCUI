@@ -75,6 +75,13 @@ animations"; not the default because Remote Desktop sessions report animations a
 **Workspace**: `RestoreOnStartup`, `AutoSaveSeconds`, `Path` (default `%LOCALAPPDATA%\CCUI\workspace.json`),
 `LaunchStaggerMilliseconds`.
 
+**Update**: how installed copies find new versions (copies run from Visual Studio or an unpacked folder never
+update). `Enabled`; `Source`, a GitHub repository whose Releases hold the packages, or a folder or URL with
+Velopack packages (handy for testing a build before publishing it); `CheckHours` between checks, the first one
+shortly after start; `Prerelease` to also take GitHub pre-releases. A found version is downloaded in the
+background and offered as an "Update to x.y.z" chip in the title bar; clicking it restarts CCUI into the new
+version, and the open sessions come back with the workspace.
+
 ## Terminal keys
 
 Ctrl+C copies when text is selected and sends ^C otherwise; Ctrl+Shift+C always copies; Ctrl+V pastes (bracketed

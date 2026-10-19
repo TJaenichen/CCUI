@@ -3,6 +3,7 @@ using CCUI.Core.Claude;
 using CCUI.Core.Sessions;
 using CCUI.Core.Settings;
 using CCUI.Core.Threading;
+using CCUI.Core.Updates;
 using CCUI.Core.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -20,6 +21,7 @@ public sealed record ShellServices(
     IDialogService Dialogs,
     IClipboardService Clipboard,
     IClaudeProcessProbe Processes,
+    IAppUpdater Updater,
     TimeProvider Time,
     ILogger<ShellViewModel> Logger);
 
@@ -31,10 +33,14 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
     private readonly SessionListOptions _list;
     private readonly WorkspaceOptions _workspace;
     private readonly AppearanceOptions _appearance;
+    private readonly UpdateOptions _updates;
+    private readonly CancellationTokenSource _stopping = new();
     private ITimer? _clock;
     private ITimer? _refresh;
     private ITimer? _autosave;
+    private ITimer? _updateCheck;
     private int _refreshing;
+    private int _checkingUpdates;
     private IReadOnlySet<string> _runningElsewhere = new HashSet<string>();
 
     public ShellViewModel(
@@ -43,13 +49,15 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         IOptions<SessionListOptions> list,
         IOptions<WorkspaceOptions> workspace,
         IOptions<AppearanceOptions> appearance,
-        IOptions<DemoOptions> demo)
+        IOptions<DemoOptions> demo,
+        IOptions<UpdateOptions> updates)
     {
         _services = services;
         _claude = claude.Value;
         _list = list.Value;
         _workspace = workspace.Value;
         _appearance = appearance.Value;
+        _updates = updates.Value;
         IsDemo = demo.Value.Enabled;
         SessionList.OpenRequested += (_, item) => OpenSession(item);
         Panes.CollectionChanged += (_, _) => UpdateStatus();
@@ -82,6 +90,23 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
     [ObservableProperty]
     public partial string StatusText { get; set; } = string.Empty;
 
+    /// <summary>A newer version that has been downloaded and applies on restart; null until there is one.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasUpdate), nameof(UpdateText))]
+    [NotifyCanExecuteChangedFor(nameof(RestartToUpdateCommand))]
+    public partial string? ReadyUpdate { get; set; }
+
+    public bool HasUpdate => ReadyUpdate is not null;
+
+    public string UpdateText => ReadyUpdate is { } version ? "Update to " + version : string.Empty;
+
+    /// <summary>The running version, for the title's tooltip.</summary>
+    public string VersionText => "CCUI " + _services.Updater.CurrentVersion
+        + (_services.Updater.IsInstalled ? string.Empty : " (not installed, so no updates)");
+
+    /// <summary>The user chose to restart into the downloaded update; the view closes the window.</summary>
+    public event EventHandler? RestartRequested;
+
     /// <summary>Loads the saved workspace (if restoring is on), reopens its sessions and starts the timers.</summary>
     public async Task StartAsync(WorkspaceState? saved)
     {
@@ -91,6 +116,12 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         {
             var period = TimeSpan.FromSeconds(_workspace.AutoSaveSeconds);
             _autosave = _services.Time.CreateTimer(_ => _services.Dispatcher.Post(SaveWorkspace), null, period, period);
+        }
+
+        if (_updates.Enabled && _updates.CheckHours > 0 && _services.Updater.IsInstalled)
+        {
+            // Soon after start, then on a long period: new versions are rare and GitHub rate-limits anonymous checks.
+            _updateCheck = _services.Time.CreateTimer(state => _ = CheckForUpdatesAsync(), null, TimeSpan.FromSeconds(20), TimeSpan.FromHours(_updates.CheckHours));
         }
 
         if (IsDemo)
@@ -185,6 +216,8 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         _clock?.Dispose();
         _refresh?.Dispose();
         _autosave?.Dispose();
+        _updateCheck?.Dispose();
+        await _stopping.CancelAsync().ConfigureAwait(false);
         // In parallel: each pseudo console may take a moment to drain and close.
         await Task.WhenAll(Panes.ToList().Select(p => p.DisposeAsync().AsTask())).ConfigureAwait(false);
     }
@@ -270,6 +303,54 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
 
         SessionList.DismissReboot([item]);
         SaveWorkspace();
+    }
+
+    /// <summary>Looks for a newer version and downloads it, so that one click restarts into it.</summary>
+    internal async Task CheckForUpdatesAsync()
+    {
+        if (Interlocked.Exchange(ref _checkingUpdates, 1) == 1)
+        {
+            return;
+        }
+
+        try
+        {
+            var token = _stopping.Token;
+            var version = await _services.Updater.CheckAsync(token).ConfigureAwait(false);
+            if (version is null || version == ReadyUpdate)
+            {
+                return;
+            }
+
+            await _services.Updater.DownloadAsync(null, token).ConfigureAwait(false);
+            _services.Dispatcher.Post(() => ReadyUpdate = version);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            // Offline, rate-limited, or a release still being published: the next check tries again.
+            _services.Logger.LogInformation(ex, "Could not check for updates");
+        }
+        finally
+        {
+            Volatile.Write(ref _checkingUpdates, 0);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(HasUpdate))]
+    private void RestartToUpdate()
+    {
+        var working = IsDemo ? 0 : Panes.Count(p => p.Activity == SessionActivity.Working && !p.HasExited);
+        var sessions = working > 0 ? $"{working} session(s) are still working; all open sessions" : "Open sessions";
+        if (!_services.Dialogs.Confirm("Update CCUI", $"Restart CCUI now to update to {ReadyUpdate}? {sessions} will be reopened."))
+        {
+            return;
+        }
+
+        _services.Updater.RestartToApply();
+        RestartRequested?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]

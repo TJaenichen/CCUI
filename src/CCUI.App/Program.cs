@@ -8,6 +8,7 @@ using CCUI.Core.Sessions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Velopack;
 
 namespace CCUI.App;
 
@@ -16,6 +17,10 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // First, always: the installer starts the exe with its own arguments while installing, updating or
+        // uninstalling, and Run() handles those and exits.
+        VelopackApp.Build().Run();
+
         // Claude runs "CCUI.exe --hook" for session hooks: relay the payload and exit before any UI starts.
         if (args.Length > 0 && args[0] == HookEnvironment.HookArgument)
         {

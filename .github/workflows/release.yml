@@ -2,7 +2,8 @@ name: Release
 
 # Tag a commit on main as vX.Y.Z and push the tag: the suite runs, the app is published self-contained for x64,
 # packed with Velopack (installer, portable zip, full and delta update packages) and uploaded as a GitHub
-# release. Installed copies pick the release up on their next update check.
+# release whose notes list the commits since the previous tag. Installed copies pick the release up on their
+# next update check.
 on:
   push:
     tags:
@@ -17,6 +18,9 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The whole history, so the notes can list the commits since the previous tag.
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -26,6 +30,31 @@ jobs:
         id: version
         shell: bash
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # Commit subjects since the previous v* tag, or every commit for the first release. Velopack puts the
+      # notes into the package and uses them as the body of the GitHub release.
+      - name: Release notes from the commits
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          tag="$GITHUB_REF_NAME"
+          previous=$(git describe --tags --abbrev=0 --match 'v*' "$tag^" 2>/dev/null || true)
+          {
+            if [ -n "$previous" ]; then
+              echo "## Changes since $previous"
+              echo
+              git log --no-merges --format='- %s' "$previous..$tag"
+              echo
+              echo "Full changelog: https://github.com/$GITHUB_REPOSITORY/compare/$previous...$tag"
+            else
+              echo "## First release"
+              echo
+              git log --no-merges --format='- %s' "$tag"
+            fi
+            echo
+            echo "Download \`CCUI.App-win-Setup.exe\` to install, or the portable zip to run without installing. Installed copies update themselves."
+          } > artifacts/notes.md
+          cat artifacts/notes.md
 
       - name: Test
         working-directory: src
@@ -51,7 +80,8 @@ jobs:
         run: >
           vpk pack --packId CCUI.App --packTitle CCUI --packAuthors "Thorsten Jaenichen"
           --packVersion ${{ steps.version.outputs.version }} --packDir artifacts/publish --mainExe CCUI.exe
-          --icon src/CCUI.App/Assets/ccui.ico --runtime win-x64 --shortcuts StartMenuRoot --outputDir artifacts/releases
+          --icon src/CCUI.App/Assets/ccui.ico --runtime win-x64 --shortcuts StartMenuRoot
+          --releaseNotes artifacts/notes.md --outputDir artifacts/releases
 
       - name: Upload to GitHub Releases
         run: >

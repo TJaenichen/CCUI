@@ -94,6 +94,8 @@ open. Updates are deltas, so they are small. Windows SmartScreen may warn on the
 installer is not code-signed; "More info" then "Run anyway" gets past it.
 
 A portable zip is published with every release too, for running without an installer (no automatic updates).
+The [releases page](https://github.com/TJaenichen/CCUI/releases) lists every version with the changes since the
+one before it.
 
 ## Run it from source
 

@@ -27,7 +27,7 @@ public sealed class SettingsWindowTests(WpfFixture wpf)
             await WpfFixture.Settle(500, cancel);
 
             var tabs = window.Tabs;
-            Assert.Equal(7, tabs.Items.Count);
+            Assert.Equal(8, tabs.Items.Count);
             for (var i = 0; i < tabs.Items.Count; i++)
             {
                 tabs.SelectedIndex = i;

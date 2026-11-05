@@ -18,11 +18,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     private static readonly string[] LineBreaks = ["\r\n", "\n"];
     private readonly ISettingsSource _source;
     private readonly IDialogService _dialogs;
+    private readonly IPluginCatalog _plugins;
 
-    public SettingsViewModel(ISettingsSource source, IDialogService dialogs)
+    public SettingsViewModel(ISettingsSource source, IDialogService dialogs, IPluginCatalog plugins)
     {
         _source = source;
         _dialogs = dialogs;
+        _plugins = plugins;
         Load(defaults: false);
         StatusText = "Ctrl+S saves. The look and the key bindings apply right away, Claude Code settings to the next session, the rest after a restart.";
     }
@@ -48,6 +50,16 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     public partial UpdateOptions Update { get; set; } = new();
+
+    [ObservableProperty]
+    public partial PluginOptions Plugins { get; set; } = new();
+
+    /// <summary>The plugins found at start, loaded or failed.</summary>
+    public IReadOnlyList<PluginInfo> LoadedPlugins => _plugins.Plugins;
+
+    public bool HasPlugins => LoadedPlugins.Count > 0;
+
+    public string PluginsDirectory => _plugins.DirectoryPath;
 
     /// <summary>Extra Claude arguments, one per line, without <see cref="SkipPermissionsFlag"/>.</summary>
     [ObservableProperty]
@@ -109,6 +121,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             UserSettingsFile.Merge(file, KeyBindingOptions.Section, _source.Defaults<KeyBindingOptions>(KeyBindingOptions.Section), KeyBindings);
             UserSettingsFile.Merge(file, WorkspaceOptions.Section, _source.Defaults<WorkspaceOptions>(WorkspaceOptions.Section), Workspace);
             UserSettingsFile.Merge(file, UpdateOptions.Section, _source.Defaults<UpdateOptions>(UpdateOptions.Section), Update);
+            UserSettingsFile.Merge(file, PluginOptions.Section, _source.Defaults<PluginOptions>(PluginOptions.Section), Plugins);
             _source.WriteUserFile(file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
@@ -140,6 +153,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void OpenFile() => _source.OpenUserFile();
 
     [RelayCommand]
+    private void OpenPluginsFolder() => _plugins.OpenDirectory();
+
+    [RelayCommand]
     private void BrowseBackgroundImage()
     {
         var file = _dialogs.PickFile("Background image", "Images|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp|All files|*.*", Terminal.BackgroundImage);
@@ -166,6 +182,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         KeyBindings = Get<KeyBindingOptions>(KeyBindingOptions.Section, defaults);
         Workspace = Get<WorkspaceOptions>(WorkspaceOptions.Section, defaults);
         Update = Get<UpdateOptions>(UpdateOptions.Section, defaults);
+        Plugins = Get<PluginOptions>(PluginOptions.Section, defaults);
 
         SkipPermissions = Claude.Arguments.Contains(SkipPermissionsFlag, StringComparer.OrdinalIgnoreCase);
         ArgumentsText = string.Join(Environment.NewLine, Claude.Arguments.Where(a => !a.Equals(SkipPermissionsFlag, StringComparison.OrdinalIgnoreCase)));

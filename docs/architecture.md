@@ -7,10 +7,13 @@
 | `CCUI.Terminal` | net10.0 | Terminal emulation: VT parser, screen buffer and scrollback, grapheme-aware widths, key encoding, asciicast recording, and the ConPTY connection (Windows at runtime). No UI. |
 | `CCUI.Terminal.Wpf` | net10.0-windows | `TerminalControl`, the WPF view of a `TerminalSession`: rendering, input, selection, scrollback. Reusable on its own. |
 | `CCUI.Core` | net10.0 | Claude Code integration (transcripts, session catalog, timeline, hooks, launching), layout math, meters, workspace persistence, demo mode, and all view models. No WPF. |
-| `CCUI.App` | net10.0-windows | The WPF shell: composition root, views, styles, docking, Windows services (DWM backdrop, WMI, dialogs). |
+| `CCUI.Plugins` | net10.0-windows | The plugin contract: `ICcuiPlugin`, `IPluginHost`, sidebar panels and the session and Claude events. Plugins reference only this; see [plugins.md](plugins.md). |
+| `CCUI.App` | net10.0-windows | The WPF shell: composition root, views, styles, docking, Windows services (DWM backdrop, WMI, dialogs), the settings page and the plugin loader. |
 | `*.Tests` | | Terminal and Core tests run on any OS; App tests render WPF and need Windows. |
 
-Dependencies point one way: App → Core → Terminal, and App → Terminal.Wpf → Terminal.
+Dependencies point one way: App → Core → Terminal, App → Terminal.Wpf → Terminal, and App → Plugins. Plugins are
+loaded from `%LOCALAPPDATA%\CCUI\plugins`, each in its own `AssemblyLoadContext`, and see the shell through
+`PluginHub` (`src/CCUI.App/Plugins`).
 
 ## How a session works
 

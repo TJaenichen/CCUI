@@ -207,6 +207,9 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
     [RelayCommand]
     private void ClearAttention() => NeedsAttention = false;
 
+    /// <summary>Transcript changes as they are applied (on the UI thread), for anything that follows the session besides the detail view.</summary>
+    public event EventHandler<TimelineChanges>? TimelineChanged;
+
     private void OnEventsArrived(object? sender, IReadOnlyList<TranscriptEvent> events) => _dispatcher.Post(() => Apply(events));
 
     // Subagent traffic only moves the meters: their tool calls and tokens stay out of the session's timeline and stats.
@@ -236,6 +239,7 @@ public sealed partial class SessionPaneViewModel : ObservableObject, IAsyncDispo
         var changes = _timeline.Apply(events);
         Detail.Apply(changes);
         Hit(changes.Pulses);
+        TimelineChanged?.Invoke(this, changes);
 
         var stats = _timeline.Statistics;
         Stats.Update(stats, _time.GetUtcNow());

@@ -1,4 +1,5 @@
 using System.IO;
+using CCUI.App.Plugins;
 using CCUI.App.Services;
 using CCUI.App.Views;
 using CCUI.Core.Claude;
@@ -25,6 +26,9 @@ public static class AppHost
     /// <summary>Personal overrides, written by the settings page and read after the shipped files.</summary>
     public static string UserSettingsPath { get; } = Path.Combine(DataDirectory, "appsettings.user.json");
 
+    /// <summary>Each subfolder holds one plugin; see docs/plugins.md.</summary>
+    public static string PluginsDirectory { get; } = Path.Combine(DataDirectory, "plugins");
+
     public static IHost Build(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
@@ -48,6 +52,7 @@ public static class AppHost
         services.Configure<WorkspaceOptions>(builder.Configuration.GetSection(WorkspaceOptions.Section));
         services.Configure<DemoOptions>(builder.Configuration.GetSection(DemoOptions.Section));
         services.Configure<UpdateOptions>(builder.Configuration.GetSection(UpdateOptions.Section));
+        services.Configure<PluginOptions>(builder.Configuration.GetSection(PluginOptions.Section));
 
         var demo = builder.Configuration.GetValue<bool>($"{DemoOptions.Section}:{nameof(DemoOptions.Enabled)}");
 
@@ -85,6 +90,9 @@ public static class AppHost
         services.AddSingleton<Func<SettingsWindow>>(sp => sp.GetRequiredService<SettingsWindow>);
         services.AddSingleton<ShellServices>();
         services.AddSingleton<ShellViewModel>();
+        services.AddSingleton<PluginHub>();
+        services.AddSingleton<PluginLoader>();
+        services.AddSingleton<IPluginCatalog>(sp => sp.GetRequiredService<PluginLoader>());
         services.AddSingleton<MainWindow>();
         return builder.Build();
     }

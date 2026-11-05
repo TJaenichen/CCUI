@@ -10,6 +10,7 @@
         xmlns:claude="clr-namespace:CCUI.Core.Claude;assembly=CCUI.Core"
         xmlns:controls="clr-namespace:CCUI.App.Controls"
         xmlns:views="clr-namespace:CCUI.App.Views"
+        xmlns:plugins="clr-namespace:CCUI.Plugins;assembly=CCUI.Plugins"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance vm:ShellViewModel}"
         Title="CCUI" Width="1500" Height="940" MinWidth="640" MinHeight="400"
@@ -142,9 +143,34 @@
                 <Border />
             </DockPanel>
 
-            <!-- Session list, resizable with the grip on its right edge. -->
-            <views:SessionListView x:Name="SessionList" Grid.Row="1" Grid.Column="0" Width="{Binding SessionListWidth}"
-                                   Visibility="{Binding IsSessionListVisible, Converter={StaticResource BoolToVisibility}}" />
+            <!-- Session list, resizable with the grip on its right edge, with plugin panels above and below it. -->
+            <DockPanel Grid.Row="1" Grid.Column="0" Width="{Binding SessionListWidth}"
+                       Visibility="{Binding IsSessionListVisible, Converter={StaticResource BoolToVisibility}}">
+                <DockPanel.Resources>
+                    <DataTemplate x:Key="PluginPanelTemplate" DataType="{x:Type plugins:SidebarPanel}">
+                        <Border Margin="8,4,2,8" Padding="8" CornerRadius="8" Background="{StaticResource PanelBrush}"
+                                BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Top" Margin="0,0,0,6" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="{Binding Title}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Title}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <ContentPresenter Content="{Binding Content}" />
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+                </DockPanel.Resources>
+                <ItemsControl x:Name="TopPanels" DockPanel.Dock="Top" ItemTemplate="{StaticResource PluginPanelTemplate}" Focusable="False" />
+                <ItemsControl x:Name="BottomPanels" DockPanel.Dock="Bottom" ItemTemplate="{StaticResource PluginPanelTemplate}" Focusable="False" />
+                <views:SessionListView x:Name="SessionList" />
+            </DockPanel>
             <Thumb Grid.Row="1" Grid.Column="1" Width="6" Cursor="SizeWE" DragDelta="OnSessionListResize"
                    Visibility="{Binding IsSessionListVisible, Converter={StaticResource BoolToVisibility}}">
                 <Thumb.Template>

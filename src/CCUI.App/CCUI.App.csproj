@@ -26,6 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CCUI.Core\CCUI.Core.csproj" />
+    <ProjectReference Include="..\CCUI.Plugins\CCUI.Plugins.csproj" />
     <ProjectReference Include="..\CCUI.Terminal.Wpf\CCUI.Terminal.Wpf.csproj" />
   </ItemGroup>
   <ItemGroup>

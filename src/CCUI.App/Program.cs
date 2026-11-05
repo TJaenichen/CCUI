@@ -40,6 +40,8 @@ public static class Program
         host.Services.GetRequiredService<LiveSettings>().Start();
 
         var window = host.Services.GetRequiredService<MainWindow>();
+        // Plugins start on the UI thread, after the window exists, so their panels have somewhere to go.
+        host.Services.GetRequiredService<CCUI.App.Plugins.PluginLoader>().LoadAll();
         var exitCode = app.Run(window);
 
         // End the sessions (their transcripts are saved by Claude, so they can be resumed).

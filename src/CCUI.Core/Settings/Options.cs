@@ -244,3 +244,14 @@ public sealed class DemoOptions
 
     public int Seed { get; set; } = 7;
 }
+
+/// <summary>Plugin loading. Section "Plugins"; a plugin's own settings live under "PluginSettings:{Name}".</summary>
+public sealed class PluginOptions
+{
+    public const string Section = "Plugins";
+
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>Folders searched besides %LOCALAPPDATA%\CCUI\plugins; each subfolder holds one plugin.</summary>
+    public List<string> Directories { get; set; } = [];
+}

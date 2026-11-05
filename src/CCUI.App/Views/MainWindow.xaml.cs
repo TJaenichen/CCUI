@@ -5,6 +5,7 @@ using System.Windows.Media;
 using AvalonDock.Controls;
 using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
+using CCUI.App.Plugins;
 using CCUI.App.Services;
 using CCUI.Core.Claude;
 using CCUI.Core.Settings;
@@ -35,6 +36,7 @@ public partial class MainWindow : Window
         IOptions<WorkspaceOptions> workspace,
         IOptions<AppearanceOptions> appearance,
         Func<SettingsWindow> settingsFactory,
+        PluginHub plugins,
         ILogger<MainWindow> logger)
     {
         InitializeComponent();
@@ -43,6 +45,8 @@ public partial class MainWindow : Window
         _settingsFactory = settingsFactory;
         _logger = logger;
         DataContext = shell;
+        TopPanels.ItemsSource = plugins.TopPanels;
+        BottomPanels.ItemsSource = plugins.BottomPanels;
         _saved = workspace.Value.RestoreOnStartup && !shell.IsDemo ? store.Load() : null;
         ApplyPlacement(_saved?.Window);
 

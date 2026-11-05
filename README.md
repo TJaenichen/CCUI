@@ -60,6 +60,9 @@ window.
 - **Fonts and cursor.** Font family, size, weight, fallback fonts, line height, cursor shape and blink, bold
   rendering, built-in glyphs for box drawing, and colour emoji on or off.
 - **Accent and focus.** An accent colour for the active tab and a coloured border on the focused pane.
+- **Plugins.** Drop a DLL into `%LOCALAPPDATA%\CCUI\plugins\<Name>\` and it can add its own panels above or below
+  the session list and follow every session: state changes, prompts, responses, tool calls and results. The
+  contract is one small assembly; see [docs/plugins.md](docs/plugins.md).
 - **A settings page.** `Ctrl+,` opens it. Fonts, colours, backdrop, opacity and key bindings change in every open
   pane as soon as you save; Claude Code options apply to the next session. It writes only what you changed to a
   personal file that survives updates.
@@ -143,6 +146,7 @@ start sessions with `--dangerously-skip-permissions` on one machine only.
 
 - [Architecture](docs/architecture.md): projects, data flow and the main decisions.
 - [Configuration](docs/configuration.md): every setting, the demo mode and personal overrides.
+- [Plugins](docs/plugins.md): the contract, where plugins live, and how to write one.
 - [Testing](docs/testing.md): what is tested where, rendered snapshots, CI and a local runner.
 - [Roadmap](docs/roadmap.md): what comes next, and the known gaps.
 

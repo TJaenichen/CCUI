@@ -43,7 +43,7 @@ public sealed class SettingsTests
             Arguments = ["--model", "opus", "--dangerously-skip-permissions"],
             SetEnvironmentVariables = new Dictionary<string, string> { ["A"] = "1" },
         });
-        var vm = new SettingsViewModel(source, new NoDialogs());
+        var vm = new SettingsViewModel(source, new NoDialogs(), new NoPlugins());
 
         Assert.True(vm.SkipPermissions);
         Assert.Equal("--model" + Environment.NewLine + "opus", vm.ArgumentsText);
@@ -71,7 +71,7 @@ public sealed class SettingsTests
         var source = new FakeSettingsSource();
         source.SetDefaults(TerminalOptions.Section, new TerminalOptions { FontSize = 10 });
         source.Set(TerminalOptions.Section, new TerminalOptions { FontSize = 14 });
-        var vm = new SettingsViewModel(source, new NoDialogs());
+        var vm = new SettingsViewModel(source, new NoDialogs(), new NoPlugins());
         Assert.Equal(14, vm.Terminal.FontSize);
 
         vm.Terminal.FontSize = 11;
@@ -96,7 +96,7 @@ public sealed class SettingsTests
     {
         var source = new FakeSettingsSource();
         source.Set(TerminalOptions.Section, new TerminalOptions { Schemes = [new CCUI.Terminal.ColorScheme { Name = "Mine" }] });
-        var vm = new SettingsViewModel(source, new NoDialogs());
+        var vm = new SettingsViewModel(source, new NoDialogs(), new NoPlugins());
 
         Assert.Equal("Mine", vm.ColorSchemes[0]);
         Assert.Contains("Campbell", vm.ColorSchemes);

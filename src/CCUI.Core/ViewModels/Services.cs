@@ -29,3 +29,33 @@ public sealed class NoClaudeProcesses : IClaudeProcessProbe
 {
     public IReadOnlySet<string> RunningSessionIds() => new HashSet<string>();
 }
+
+/// <summary>What the settings page shows about plugins; implemented by the app's plugin loader.</summary>
+public interface IPluginCatalog
+{
+    /// <summary>The folder plugins are loaded from.</summary>
+    string DirectoryPath { get; }
+
+    IReadOnlyList<PluginInfo> Plugins { get; }
+
+    void OpenDirectory();
+}
+
+/// <summary>A plugin that was found: loaded, or failed with <see cref="Error"/>.</summary>
+public sealed record PluginInfo(string Name, string Version, string Path, string? Error)
+{
+    public bool Failed => Error is not null;
+
+    public string Status => Error ?? (Version.Length > 0 ? "Loaded, version " + Version : "Loaded");
+}
+
+public sealed class NoPlugins : IPluginCatalog
+{
+    public string DirectoryPath => string.Empty;
+
+    public IReadOnlyList<PluginInfo> Plugins => [];
+
+    public void OpenDirectory()
+    {
+    }
+}

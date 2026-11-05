@@ -96,6 +96,10 @@ shortly after start; `Prerelease` to also take GitHub pre-releases. A found vers
 background and offered as an "Update to x.y.z" chip in the title bar; clicking it restarts CCUI into the new
 version, and the open sessions come back with the workspace.
 
+**Plugins**: `Enabled` (load plugins at start) and `Directories`, folders searched besides
+`%LOCALAPPDATA%\CCUI\plugins`. A plugin's own settings live under `PluginSettings:<Name>`. See
+[plugins.md](plugins.md).
+
 ## Terminal keys
 
 Ctrl+C copies when text is selected and sends ^C otherwise; Ctrl+Shift+C always copies; Ctrl+V pastes (bracketed

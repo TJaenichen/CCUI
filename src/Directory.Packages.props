@@ -5,6 +5,9 @@
     <PackageVersion Include="Dirkster.AvalonDock" Version="4.74.1" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.74.1" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <!-- Plugin contract: only the abstractions, so plugins do not drag the host's packages in. -->
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Windows.Console.ConPTY" Version="1.24.260710001" />
     <PackageVersion Include="System.Management" Version="10.0.12" />
     <PackageVersion Include="Velopack" Version="1.2.161" />

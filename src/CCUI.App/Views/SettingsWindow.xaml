@@ -374,6 +374,58 @@
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
+
+                <TabItem Header="Plugins">
+                    <ScrollViewer>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SettingsTitleStyle}" Text="Plugins" />
+                            <TextBlock Style="{StaticResource SettingsNoteStyle}"
+                                       Text="Each folder in the plugins folder holds one plugin DLL, loaded at start. Changes apply after a restart. docs/plugins.md in the repository describes how to write one." />
+
+                            <HeaderedContentControl Header="Loading">
+                                <CheckBox Content="Load plugins at start" IsChecked="{Binding Plugins.Enabled}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Folder" Tag="More folders can be listed under Plugins:Directories in the settings file.">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox IsReadOnly="True" Text="{Binding PluginsDirectory, Mode=OneWay}" />
+                                    <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource FormButtonStyle}" Content="Open" Command="{Binding OpenPluginsFolderCommand}" />
+                                </Grid>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Found at start">
+                                <StackPanel>
+                                    <TextBlock Foreground="{StaticResource TextSecondaryBrush}" Text="No plugins."
+                                               Visibility="{Binding HasPlugins, Converter={StaticResource CollapsedWhen}, ConverterParameter=True}" />
+                                    <ItemsControl ItemsSource="{Binding LoadedPlugins}" Focusable="False">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="0,0,0,10">
+                                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                                    <TextBlock FontSize="11" TextWrapping="Wrap" Text="{Binding Status}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Failed}" Value="True">
+                                                                        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" Text="{Binding Path}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </HeaderedContentControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
             </TabControl>
 
             <!-- Footer: status on the left, actions on the right. -->

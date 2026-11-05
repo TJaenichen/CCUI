@@ -37,6 +37,7 @@ public static class Program
         app.DispatcherUnhandledException += (_, e) => OnUnhandled(logger, e);
         ThemeResources.Apply(app, host.Services);
         KeyboardShortcuts.Register(host.Services);
+        host.Services.GetRequiredService<LiveSettings>().Start();
 
         var window = host.Services.GetRequiredService<MainWindow>();
         var exitCode = app.Run(window);

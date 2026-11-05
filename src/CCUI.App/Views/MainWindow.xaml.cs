@@ -24,6 +24,8 @@ public partial class MainWindow : Window
     private readonly IDialogService _dialogs;
     private readonly ILogger<MainWindow> _logger;
     private readonly WorkspaceState? _saved;
+    private readonly Func<SettingsWindow> _settingsFactory;
+    private SettingsWindow? _settings;
     private bool _closeConfirmed;
 
     public MainWindow(
@@ -32,11 +34,13 @@ public partial class MainWindow : Window
         IDialogService dialogs,
         IOptions<WorkspaceOptions> workspace,
         IOptions<AppearanceOptions> appearance,
+        Func<SettingsWindow> settingsFactory,
         ILogger<MainWindow> logger)
     {
         InitializeComponent();
         _shell = shell;
         _dialogs = dialogs;
+        _settingsFactory = settingsFactory;
         _logger = logger;
         DataContext = shell;
         _saved = workspace.Value.RestoreOnStartup && !shell.IsDemo ? store.Load() : null;
@@ -48,13 +52,7 @@ public partial class MainWindow : Window
 
         SourceInitialized += (_, _) =>
         {
-            if (!WindowBackdrop.TryApply(this, appearance.Value.Backdrop))
-            {
-                // No system backdrop (Windows 10, or turned off): make the tint opaque. The window background stays
-                // transparent so the caption buttons remain visible.
-                Resources["WindowTintBrush"] = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1A));
-            }
-
+            ApplyBackdrop(appearance.Value.Backdrop);
             if (_saved?.Window?.Maximized == true)
             {
                 WindowState = WindowState.Maximized;
@@ -87,7 +85,39 @@ public partial class MainWindow : Window
         Dispatcher.BeginInvoke(SessionList.FocusList);
     }
 
+    /// <summary>Opens the settings page, or brings the open one to the front.</summary>
+    public void ShowSettings()
+    {
+        if (_settings is { IsLoaded: true })
+        {
+            _settings.Activate();
+            return;
+        }
+
+        _settings = _settingsFactory();
+        _settings.Owner = this;
+        _settings.Closed += (_, _) => _settings = null;
+        _settings.Show();
+    }
+
+    /// <summary>Applies the configured backdrop; called at start and again when the setting changes.</summary>
+    public void ApplyBackdrop(string backdrop)
+    {
+        if (WindowBackdrop.TryApply(this, backdrop))
+        {
+            Resources.Remove("WindowTintBrush");
+        }
+        else
+        {
+            // No system backdrop (Windows 10, or turned off): make the tint opaque. The window background stays
+            // transparent so the caption buttons remain visible.
+            Resources["WindowTintBrush"] = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1A));
+        }
+    }
+
     private void OnTileClick(object sender, RoutedEventArgs e) => Tile();
+
+    private void OnSettingsClick(object sender, RoutedEventArgs e) => ShowSettings();
 
     // Clicking a session's tab (even the active one) makes its terminal ready to type in.
     private void OnDockMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)

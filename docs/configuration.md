@@ -10,7 +10,19 @@ ones winning:
 4. Environment variables prefixed `CCUI_` (e.g. `CCUI_Terminal__FontSize=13`)
 5. Command-line arguments (e.g. `--Demo:Enabled=true`)
 
-Settings are read at startup; restart to apply changes.
+## The settings page
+
+The gear in the title bar, or `Ctrl+,`, opens the settings page. It shows every section below with the values in
+effect and saves what you change to `appsettings.user.json`: only the values that differ from the shipped defaults
+are written, so a later change of a default still reaches you, and anything else in the file is left alone
+(comments are not kept). The configuration reloads when the file changes, whether the page or an editor wrote it:
+
+- the terminal look (fonts, scheme, opacity, background image, cursor, padding), the window appearance and the key
+  bindings apply right away, to every open pane;
+- Claude Code settings apply to sessions started afterwards;
+- session list, workspace and update settings apply after a restart.
+
+Custom colour schemes and `SendKeys` chords are edited in the file; **Open file** on the page gets you there.
 
 ## Demo mode
 
@@ -70,7 +82,8 @@ animations"; not the default because Remote Desktop sessions report animations a
 
 **KeyBindings**: `FocusLeft/Right/Up/Down` (Alt+Arrows), `ToggleDetail` (Ctrl+Shift+D), `NewSession`
 (Ctrl+Shift+T), `CloseSession` (Ctrl+Shift+W), `ToggleSessionList` (Ctrl+Shift+B), `FocusSessionList`
-(Ctrl+Shift+E), `TileLayout` (Ctrl+Shift+G). Empty disables a binding.
+(Ctrl+Shift+E), `TileLayout` (Ctrl+Shift+G), `OpenSettings` (Ctrl+OemComma, that is Ctrl+,). Empty disables a
+binding.
 
 **Workspace**: `RestoreOnStartup`, `AutoSaveSeconds`, `Path` (default `%LOCALAPPDATA%\CCUI\workspace.json`),
 `LaunchStaggerMilliseconds`.

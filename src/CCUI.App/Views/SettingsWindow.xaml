@@ -1,0 +1,393 @@
+<Window x:Class="CCUI.App.Views.SettingsWindow"
+        Icon="pack://application:,,,/CCUI;component/Assets/ccui.ico"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:CCUI.Core.ViewModels;assembly=CCUI.Core"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance vm:SettingsViewModel}"
+        Title="CCUI settings" Width="920" Height="680" MinWidth="720" MinHeight="480"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="Transparent"
+        FontFamily="{StaticResource UiFont}" FontSize="12.5"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="38" GlassFrameThickness="-1" ResizeBorderThickness="6" UseAeroCaptionButtons="True" CornerRadius="0" />
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <!-- Tint over the backdrop; the caption buttons' corner stays clear (see MainWindow). -->
+        <Grid IsHitTestVisible="False">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="38" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Rectangle Fill="{DynamicResource WindowTintBrush}" Margin="0,0,140,0" />
+            <Rectangle Grid.Row="1" Fill="{DynamicResource WindowTintBrush}" />
+        </Grid>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="38" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="56" />
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <StackPanel Orientation="Horizontal" Margin="14,0,150,0" VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource IconTextStyle}" FontSize="14" Foreground="{DynamicResource AccentBrush}" Text="&#xE713;" />
+                <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="Settings" />
+                <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                           Text="{Binding UserFilePath}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <TabControl x:Name="Tabs" Grid.Row="1" Style="{StaticResource SettingsTabControlStyle}">
+                <TabControl.Resources>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+                        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+                        <Setter Property="Padding" Value="24,18,20,8" />
+                    </Style>
+                    <Style TargetType="HeaderedContentControl" BasedOn="{StaticResource SettingRowStyle}" />
+                    <Style TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}" />
+                    <Style TargetType="ComboBox" BasedOn="{StaticResource FormComboBoxStyle}" />
+                    <Style TargetType="CheckBox" BasedOn="{StaticResource FormCheckBoxStyle}" />
+                    <Style TargetType="Slider" BasedOn="{StaticResource FormSliderStyle}" />
+                    <Style x:Key="Narrow" TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
+                        <Setter Property="Width" Value="90" />
+                        <Setter Property="HorizontalAlignment" Value="Left" />
+                    </Style>
+                    <Style x:Key="Medium" TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
+                        <Setter Property="Width" Value="200" />
+                        <Setter Property="HorizontalAlignment" Value="Left" />
+                    </Style>
+                    <Style x:Key="Chord" TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
+                        <Setter Property="Width" Value="200" />
+                        <Setter Property="HorizontalAlignment" Value="Left" />
+                        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+                    </Style>
+                    <Style x:Key="Multiline" TargetType="TextBox" BasedOn="{StaticResource FormMultilineTextBoxStyle}" />
+                </TabControl.Resources>
+
+                <TabItem Header="Terminal">
+                    <ScrollViewer>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SettingsTitleStyle}" Text="Terminal" />
+                            <TextBlock Style="{StaticResource SettingsNoteStyle}" Text="The look of every terminal pane. Applies to open panes when you save." />
+
+                            <HeaderedContentControl Header="Font">
+                                <ComboBox IsEditable="True" ItemsSource="{Binding FontFamilies}" Text="{Binding Terminal.FontFamily, UpdateSourceTrigger=LostFocus}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Font size" Tag="In points, as in Windows Terminal (12pt is 16px).">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Narrow}" Text="{Binding Terminal.FontSize}" />
+                                    <TextBlock Margin="12,0,6,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="Weight" />
+                                    <ComboBox Width="130" ItemsSource="{Binding FontWeights}" SelectedItem="{Binding Terminal.FontWeight}" />
+                                    <TextBlock Margin="12,0,6,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="Line height" />
+                                    <TextBox Style="{StaticResource Narrow}" Width="60" Text="{Binding Terminal.LineHeight}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Fallback fonts" Tag="Tried in order for glyphs the font lacks.">
+                                <TextBox Text="{Binding Terminal.FallbackFontFamilies}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Colour scheme" Tag="Built-in schemes, plus any in the Schemes list of the settings file (Windows Terminal's format).">
+                                <ComboBox IsEditable="True" ItemsSource="{Binding ColorSchemes}" Text="{Binding Terminal.ColorScheme, UpdateSourceTrigger=LostFocus}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Opacity" Tag="How much of the window backdrop shows through the terminal background.">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider x:Name="OpacitySlider" Minimum="0" Maximum="100" Value="{Binding Terminal.Opacity}" Margin="0,0,12,0" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource Narrow}" Width="60" Text="{Binding Value, ElementName=OpacitySlider, StringFormat={}{0:0}}" />
+                                </Grid>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Background image" Tag="Shown behind every terminal. Environment variables are expanded; empty for none.">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding Terminal.BackgroundImage}" />
+                                    <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource FormButtonStyle}" Content="Browse" Command="{Binding BrowseBackgroundImageCommand}" />
+                                    <Button Grid.Column="2" Margin="6,0,0,0" Style="{StaticResource FormButtonStyle}" Content="Clear" Command="{Binding ClearBackgroundImageCommand}" />
+                                </Grid>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Image opacity">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider x:Name="ImageOpacitySlider" Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1" Value="{Binding Terminal.BackgroundImageOpacity}" Margin="0,0,12,0" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource Narrow}" Width="60" Text="{Binding Value, ElementName=ImageOpacitySlider, StringFormat={}{0:0.00}}" />
+                                </Grid>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Image placement">
+                                <StackPanel Orientation="Horizontal">
+                                    <ComboBox Width="150" ItemsSource="{Binding StretchModes}" SelectedItem="{Binding Terminal.BackgroundImageStretchMode}" />
+                                    <ComboBox Width="150" Margin="8,0,0,0" ItemsSource="{Binding Alignments}" SelectedItem="{Binding Terminal.BackgroundImageAlignment}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Cursor">
+                                <StackPanel Orientation="Horizontal">
+                                    <ComboBox Width="130" ItemsSource="{Binding CursorShapes}" SelectedItem="{Binding Terminal.CursorShape}" />
+                                    <CheckBox Margin="16,0,0,0" Content="Blink" IsChecked="{Binding Terminal.CursorBlink}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Intense text" Tag="How bold text is shown: bold weight, bright colour, both or neither.">
+                                <ComboBox Width="130" HorizontalAlignment="Left" ItemsSource="{Binding IntenseTextStyles}" SelectedItem="{Binding Terminal.IntenseTextStyle}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Rendering">
+                                <StackPanel>
+                                    <CheckBox Content="Draw box drawing and block characters as geometry" IsChecked="{Binding Terminal.UseBuiltinGlyphs}" />
+                                    <CheckBox Content="Colour emoji" IsChecked="{Binding Terminal.UseColorEmoji}" />
+                                    <CheckBox Content="Copy on select" IsChecked="{Binding Terminal.CopyOnSelect}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Padding" Tag="Inside the pane, in pixels: one value, &quot;horizontal,vertical&quot; or &quot;left,top,right,bottom&quot;.">
+                                <TextBox Style="{StaticResource Narrow}" Text="{Binding Terminal.Padding}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Scrollback lines" Tag="For sessions started after saving.">
+                                <TextBox Style="{StaticResource Narrow}" Text="{Binding Terminal.ScrollbackLines}" />
+                            </HeaderedContentControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Appearance">
+                    <ScrollViewer>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SettingsTitleStyle}" Text="Appearance" />
+                            <TextBlock Style="{StaticResource SettingsNoteStyle}" Text="The window around the terminals. Applies when you save; the meter timings apply to new sessions." />
+
+                            <HeaderedContentControl Header="Backdrop" Tag="Windows 11 system backdrops; None gives an opaque window.">
+                                <ComboBox Width="150" HorizontalAlignment="Left" ItemsSource="{Binding Backdrops}" SelectedItem="{Binding Appearance.Backdrop}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Window tint" Tag="Laid over the backdrop, #AARRGGBB; the alpha sets how dark the window is.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Medium}" Width="130" Text="{Binding Appearance.WindowTint, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Border Width="28" Height="28" Margin="8,0,0,0" CornerRadius="5" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1"
+                                            Background="{Binding Appearance.WindowTint, Converter={StaticResource ColorTextToBrush}}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Accent colour" Tag="The active tab, chips, focused inputs and the settings' own highlights.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Medium}" Width="130" Text="{Binding Appearance.AccentColor, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Border Width="28" Height="28" Margin="8,0,0,0" CornerRadius="5" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1"
+                                            Background="{Binding Appearance.AccentColor, Converter={StaticResource ColorTextToBrush}}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Focus border" Tag="Around the pane that has the keyboard. Empty colour uses the accent.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Medium}" Width="130" Text="{Binding Appearance.FocusBorderColor, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Border Width="28" Height="28" Margin="8,0,0,0" CornerRadius="5" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1"
+                                            Background="{Binding Appearance.FocusBorderColor, Converter={StaticResource ColorTextToBrush}}" />
+                                    <TextBlock Margin="16,0,6,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="Thickness" />
+                                    <TextBox Style="{StaticResource Narrow}" Width="60" Text="{Binding Appearance.FocusBorderThickness}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Animations" Tag="The working spinner. System follows Windows' &quot;Show animations&quot;, which Remote Desktop usually reports as off.">
+                                <ComboBox Width="130" HorizontalAlignment="Left" ItemsSource="{Binding AnimationModes}" SelectedItem="{Binding Appearance.Animations}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Activity meters" Tag="Decay half-life and peak hold, in milliseconds.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="Decay" />
+                                    <TextBox Style="{StaticResource Narrow}" Text="{Binding Appearance.MeterDecayMilliseconds}" />
+                                    <TextBlock Margin="16,0,6,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="Peak hold" />
+                                    <TextBox Style="{StaticResource Narrow}" Text="{Binding Appearance.MeterPeakHoldMilliseconds}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Claude Code">
+                    <ScrollViewer>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SettingsTitleStyle}" Text="Claude Code" />
+                            <TextBlock Style="{StaticResource SettingsNoteStyle}" Text="How sessions are started. Applies to sessions started after you save; open panes keep what they were started with." />
+
+                            <HeaderedContentControl Header="Command" Tag="Found through PATH: claude.exe, or claude.cmd from npm.">
+                                <TextBox Style="{StaticResource Medium}" Text="{Binding Claude.Command}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Permissions" Tag="Adds --dangerously-skip-permissions: Claude runs every tool call without asking. Only where that is acceptable.">
+                                <CheckBox Content="Skip permission prompts" IsChecked="{Binding SkipPermissions}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Extra arguments" Tag="One per line, for every session. For example --model on one line and opus on the next.">
+                                <TextBox Style="{StaticResource Multiline}" Text="{Binding ArgumentsText, UpdateSourceTrigger=PropertyChanged}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Config directory" Tag="Claude Code's data folder. Empty means CLAUDE_CONFIG_DIR, or ~/.claude.">
+                                <TextBox Text="{Binding Claude.ConfigDirectory}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Environment">
+                                <StackPanel>
+                                    <CheckBox Content="Start from a fresh logon environment, as the Start menu does" IsChecked="{Binding Claude.FreshEnvironment}" />
+                                    <CheckBox Content="Register session hooks (follow /clear, show working and waiting right away)" IsChecked="{Binding Claude.UseSessionHooks}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Remove variables" Tag="Taken out of every session's environment, one per line.">
+                                <TextBox Style="{StaticResource Multiline}" Text="{Binding RemoveVariablesText, UpdateSourceTrigger=PropertyChanged}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Set variables" Tag="Put into every session's environment, one NAME=value per line.">
+                                <TextBox Style="{StaticResource Multiline}" Text="{Binding SetVariablesText, UpdateSourceTrigger=PropertyChanged}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Pseudo console" Tag="Bundled is the current ConPTY shipped with CCUI; Inbox is the one built into Windows.">
+                                <ComboBox Width="130" HorizontalAlignment="Left" ItemsSource="{Binding PseudoConsoles}" SelectedItem="{Binding Claude.PseudoConsole}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Context window" Tag="Tokens, the denominator of the context-used percentage. 1000000 for models with a 1M context.">
+                                <TextBox Style="{StaticResource Medium}" Width="130" Text="{Binding Claude.ContextWindowTokens}" />
+                            </HeaderedContentControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Session list">
+                    <ScrollViewer>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SettingsTitleStyle}" Text="Session list" />
+                            <TextBlock Style="{StaticResource SettingsNoteStyle}" Text="Which past sessions are listed. Applies after a restart." />
+
+                            <HeaderedContentControl Header="Show sessions from" Tag="Sessions older than this are not listed.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Narrow}" Width="60" Text="{Binding SessionList.MaxAgeDays}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="days" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Refresh every">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Narrow}" Width="60" Text="{Binding SessionList.RefreshSeconds}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="seconds" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Reboot look-back" Tag="How far before the last boot to look for sessions a reboot killed; they get a Reopen button.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Narrow}" Width="60" Text="{Binding SessionList.RebootLookBackHours}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="hours" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Keyboard">
+                    <ScrollViewer>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SettingsTitleStyle}" Text="Keyboard" />
+                            <TextBlock Style="{StaticResource SettingsNoteStyle}"
+                                       Text="App shortcuts as WPF key gestures: Ctrl+Shift+T, Alt+Left, Ctrl+OemComma. Empty disables one. Applies when you save. Chords that send text to the terminal (SendKeys) are edited in the file." />
+
+                            <HeaderedContentControl Header="Focus pane left">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.FocusLeft}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Focus pane right">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.FocusRight}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Focus pane above">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.FocusUp}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Focus pane below">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.FocusDown}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="New session">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.NewSession}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Close session">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.CloseSession}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Detail view">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.ToggleDetail}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Show session list">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.ToggleSessionList}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Focus session list">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.FocusSessionList}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Tile sessions">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.TileLayout}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Settings">
+                                <TextBox Style="{StaticResource Chord}" Text="{Binding KeyBindings.OpenSettings}" />
+                            </HeaderedContentControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Workspace">
+                    <ScrollViewer>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SettingsTitleStyle}" Text="Workspace" />
+                            <TextBlock Style="{StaticResource SettingsNoteStyle}" Text="Saving and restoring the open sessions, the layout and the window. Applies after a restart." />
+
+                            <HeaderedContentControl Header="On startup">
+                                <CheckBox Content="Reopen the sessions and layout from last time" IsChecked="{Binding Workspace.RestoreOnStartup}" />
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Save every" Tag="The workspace is also saved when CCUI closes. 0 turns the periodic save off.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Narrow}" Width="60" Text="{Binding Workspace.AutoSaveSeconds}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="seconds" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Launch stagger" Tag="Pause between session launches on restore, so a dozen sessions do not start at once.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Narrow}" Text="{Binding Workspace.LaunchStaggerMilliseconds}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="milliseconds" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Workspace file" Tag="Empty means %LOCALAPPDATA%\CCUI\workspace.json.">
+                                <TextBox Text="{Binding Workspace.Path}" />
+                            </HeaderedContentControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Updates">
+                    <ScrollViewer>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SettingsTitleStyle}" Text="Updates" />
+                            <TextBlock Style="{StaticResource SettingsNoteStyle}" Text="How installed copies find new versions. Copies run from Visual Studio or an unpacked folder never update. Applies after a restart." />
+
+                            <HeaderedContentControl Header="Check for updates">
+                                <StackPanel>
+                                    <CheckBox Content="Check in the background and offer new versions in the title bar" IsChecked="{Binding Update.Enabled}" />
+                                    <CheckBox Content="Include pre-releases" IsChecked="{Binding Update.Prerelease}" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Check every" Tag="The first check runs shortly after start.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Style="{StaticResource Narrow}" Width="60" Text="{Binding Update.CheckHours}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="hours" />
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <HeaderedContentControl Header="Source" Tag="A GitHub repository (its Releases), or a folder or web address holding Velopack packages.">
+                                <TextBox Text="{Binding Update.Source}" />
+                            </HeaderedContentControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+
+            <!-- Footer: status on the left, actions on the right. -->
+            <Grid Grid.Row="2" Margin="14,0,14,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock VerticalAlignment="Center" FontSize="11.5" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding StatusText}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <Button Style="{StaticResource TextButtonStyle}" Margin="0,0,16,0" Foreground="{StaticResource TextSecondaryBrush}" Content="Open file" Command="{Binding OpenFileCommand}"
+                            ToolTip="Open appsettings.user.json in your editor, for schemes and SendKeys" />
+                    <Button Style="{StaticResource FormButtonStyle}" Content="Reset to defaults" Command="{Binding ResetToDefaultsCommand}" />
+                    <Button Style="{StaticResource FormButtonStyle}" Margin="8,0,0,0" Content="Discard" Command="{Binding DiscardCommand}" />
+                    <Button x:Name="SaveButton" Style="{StaticResource FormAccentButtonStyle}" Margin="8,0,0,0" Content="Save" Command="{Binding SaveCommand}" ToolTip="Ctrl+S" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

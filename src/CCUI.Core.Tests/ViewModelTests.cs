@@ -545,6 +545,8 @@ public sealed class ViewModelTests
 
         public string? PickFolder(string title, string? initialDirectory) => Folder;
 
+        public string? PickFile(string title, string filter, string? initialPath) => null;
+
         public bool Confirm(string title, string message)
         {
             Confirmations.Add(message);

@@ -133,6 +133,10 @@
                             ToolTip="Tile all sessions (Ctrl+Shift+G)">
                         <TextBlock Style="{StaticResource IconTextStyle}" Text="&#xE80A;" />
                     </Button>
+                    <Button Style="{StaticResource IconButtonStyle}" WindowChrome.IsHitTestVisibleInChrome="True" Click="OnSettingsClick"
+                            ToolTip="Settings (Ctrl+,)">
+                        <TextBlock Style="{StaticResource IconTextStyle}" Text="&#xE713;" />
+                    </Button>
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding StatusText}" />
                 <Border />

@@ -12,6 +12,19 @@ public sealed class DialogService : IDialogService
         return dialog.ShowDialog(Application.Current.MainWindow) == true ? dialog.FolderName : null;
     }
 
+    public string? PickFile(string title, string filter, string? initialPath)
+    {
+        var dialog = new OpenFileDialog { Title = title, Filter = filter, CheckFileExists = true };
+        if (!string.IsNullOrWhiteSpace(initialPath))
+        {
+            var expanded = Environment.ExpandEnvironmentVariables(initialPath);
+            dialog.InitialDirectory = System.IO.Path.GetDirectoryName(expanded) ?? string.Empty;
+            dialog.FileName = System.IO.Path.GetFileName(expanded);
+        }
+
+        return dialog.ShowDialog(Application.Current.MainWindow) == true ? dialog.FileName : null;
+    }
+
     public bool Confirm(string title, string message) =>
         MessageBox.Show(Application.Current.MainWindow, message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 

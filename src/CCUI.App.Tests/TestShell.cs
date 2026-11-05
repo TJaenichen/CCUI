@@ -44,6 +44,8 @@ internal static class TestShell
     {
         public string? PickFolder(string title, string? initialDirectory) => null;
 
+        public string? PickFile(string title, string filter, string? initialPath) => null;
+
         public bool Confirm(string title, string message) => false;
 
         public void ShowError(string title, string message)

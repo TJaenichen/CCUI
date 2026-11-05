@@ -15,14 +15,16 @@ public static partial class WindowBackdrop
     private const int DwmwaUseImmersiveDarkMode = 20;
     private const int DwmwaSystemBackdropType = 38;
 
+    /// <summary>Applies the backdrop; can be called again to switch it while the window is open.</summary>
     public static bool TryApply(Window window, string backdrop)
     {
-        var type = backdrop.ToLowerInvariant() switch
+        // DWM_SYSTEMBACKDROP_TYPE: 1 none, 2 mica, 3 acrylic, 4 tabbed (mica alt).
+        var type = backdrop.Trim().ToLowerInvariant() switch
         {
             "mica" => 2,
             "acrylic" => 3,
             "micaalt" => 4,
-            _ => 0,
+            _ => 1,
         };
 
         var hwnd = new WindowInteropHelper(window).EnsureHandle();
@@ -30,8 +32,15 @@ public static partial class WindowBackdrop
         _ = DwmSetWindowAttribute(hwnd, DwmwaUseImmersiveDarkMode, ref dark, sizeof(int));
 
         // The system backdrop API exists from Windows 11 22H2 (build 22621).
-        if (type == 0 || Environment.OSVersion.Version.Build < 22621)
+        if (Environment.OSVersion.Version.Build < 22621)
         {
+            return false;
+        }
+
+        if (type == 1)
+        {
+            // Turns a backdrop off again when the setting changes at runtime.
+            _ = DwmSetWindowAttribute(hwnd, DwmwaSystemBackdropType, ref type, sizeof(int));
             return false;
         }
 

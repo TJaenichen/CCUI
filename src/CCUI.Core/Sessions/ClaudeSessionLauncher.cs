@@ -8,10 +8,11 @@ using Microsoft.Extensions.Options;
 
 namespace CCUI.Core.Sessions;
 
-/// <summary>Starts real claude processes in pseudo consoles.</summary>
+/// <summary>Starts real claude processes in pseudo consoles. Reads the options per launch, so settings saved while
+/// the app runs apply to the next session.</summary>
 public sealed class ClaudeSessionLauncher(
-    IOptions<ClaudeOptions> claudeOptions,
-    IOptions<TerminalOptions> terminalOptions,
+    IOptionsMonitor<ClaudeOptions> claudeOptions,
+    IOptionsMonitor<TerminalOptions> terminalOptions,
     ClaudePaths paths,
     HookEnvironment? hooks,
     TimeProvider time,
@@ -19,8 +20,8 @@ public sealed class ClaudeSessionLauncher(
 {
     public ClaudeSessionRuntime Launch(SessionLaunchRequest request)
     {
-        var claude = claudeOptions.Value;
-        var terminal = terminalOptions.Value;
+        var claude = claudeOptions.CurrentValue;
+        var terminal = terminalOptions.CurrentValue;
         var plan = ClaudeLaunchPlanner.Plan(request, claude, BaseEnvironment(claude), claude.UseSessionHooks ? hooks : null, Guid.NewGuid);
         var connection = CreateConnection(request, claude, plan);
         var session = new TerminalSession(connection, terminal.DefaultColumns, terminal.DefaultRows, terminal.ScrollbackLines);

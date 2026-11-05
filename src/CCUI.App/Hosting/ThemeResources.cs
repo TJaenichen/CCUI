@@ -6,12 +6,15 @@ using Microsoft.Extensions.Options;
 
 namespace CCUI.App.Hosting;
 
-/// <summary>Pushes the configured colours into the application resources (Themes/Theme.xaml holds the defaults).</summary>
+/// <summary>Pushes the configured colours into the application resources (Themes/Theme.xaml holds the defaults).
+/// Can run again when the settings change: the views bind these with DynamicResource.</summary>
 public static class ThemeResources
 {
-    public static void Apply(Application app, IServiceProvider services)
+    public static void Apply(Application app, IServiceProvider services) =>
+        Apply(app, services.GetRequiredService<IOptions<AppearanceOptions>>().Value, services.GetRequiredService<TerminalAppearance>());
+
+    public static void Apply(Application app, AppearanceOptions appearance, TerminalAppearance terminal)
     {
-        var appearance = services.GetRequiredService<IOptions<AppearanceOptions>>().Value;
         var accent = ParseColor(appearance.AccentColor, Color.FromRgb(0xD9, 0x77, 0x57));
         var focus = ParseColor(appearance.FocusBorderColor, accent);
 
@@ -21,7 +24,7 @@ public static class ThemeResources
         Set(app, "FocusBorderBrush", Freeze(new SolidColorBrush(focus)));
         Set(app, "FocusBorderThickness", new Thickness(Math.Max(0, appearance.FocusBorderThickness)));
         Set(app, "WindowTintBrush", Freeze(new SolidColorBrush(ParseColor(appearance.WindowTint, Color.FromArgb(0xB0, 0x10, 0x10, 0x14)))));
-        Set(app, "TerminalAppearance", services.GetRequiredService<TerminalAppearance>());
+        Set(app, "TerminalAppearance", terminal);
         Set(app, "AnimationsEnabled", appearance.Animations.Trim().ToUpperInvariant() switch
         {
             "OFF" => false,

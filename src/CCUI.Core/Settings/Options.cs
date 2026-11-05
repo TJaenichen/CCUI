@@ -177,6 +177,9 @@ public sealed class KeyBindingOptions
 
     public string FocusDown { get; set; } = "Alt+Down";
 
+    /// <summary>Opens the settings page.</summary>
+    public string OpenSettings { get; set; } = "Ctrl+OemComma";
+
     public string ToggleDetail { get; set; } = "Ctrl+Shift+D";
 
     public string NewSession { get; set; } = "Ctrl+Shift+T";

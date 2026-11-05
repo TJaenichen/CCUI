@@ -60,12 +60,15 @@ window.
 - **Fonts and cursor.** Font family, size, weight, fallback fonts, line height, cursor shape and blink, bold
   rendering, built-in glyphs for box drawing, and colour emoji on or off.
 - **Accent and focus.** An accent colour for the active tab and a coloured border on the focused pane.
+- **A settings page.** `Ctrl+,` opens it. Fonts, colours, backdrop, opacity and key bindings change in every open
+  pane as soon as you save; Claude Code options apply to the next session. It writes only what you changed to a
+  personal file that survives updates.
 
 ### Keyboard first
 
 - `Alt+Arrow` moves focus to the pane in that direction, geometrically, across the main and floating windows.
 - `Ctrl+Shift+T` new session, `Ctrl+Shift+W` close, `Ctrl+Shift+D` detail view, `Ctrl+Shift+B` and
-  `Ctrl+Shift+E` show and focus the session list, `Ctrl+Shift+G` tile. All rebindable.
+  `Ctrl+Shift+E` show and focus the session list, `Ctrl+Shift+G` tile, `Ctrl+,` settings. All rebindable.
 - In the terminal: `Ctrl+C` copies a selection and interrupts otherwise, `Ctrl+Shift+C` always copies, `Ctrl+V`
   pastes (bracketed when Claude asks for it), right-click copies or pastes, `Shift+Enter` inserts a newline, and
   `Ctrl+click` opens a URL. Extra chords can be mapped to any text with `SendKeys`.

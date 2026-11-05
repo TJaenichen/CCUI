@@ -1,25 +1,73 @@
 using System.IO;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CCUI.App.Input;
 using CCUI.Core.Settings;
 using CCUI.Terminal;
 using CCUI.Terminal.Wpf;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Options;
 
 namespace CCUI.App.Hosting;
 
-/// <summary>The terminal look resolved from <see cref="TerminalOptions"/> into WPF values, bound by every pane.</summary>
-public sealed class TerminalAppearance
+/// <summary>
+/// The terminal look resolved from <see cref="TerminalOptions"/> into WPF values, bound by every pane. There is one
+/// instance for the app; <see cref="Apply"/> replaces its values when the settings change and the panes follow
+/// through the property change notifications.
+/// </summary>
+public sealed class TerminalAppearance : ObservableObject
 {
-    public TerminalAppearance(IOptions<TerminalOptions> options)
+    public TerminalAppearance(IOptions<TerminalOptions> options) => Apply(options.Value);
+
+    public FontFamily FontFamily { get; private set => SetProperty(ref field, value); } = new("Consolas");
+
+    /// <summary>In device-independent pixels (the options use points, like Windows Terminal).</summary>
+    public double FontSize { get; private set => SetProperty(ref field, value); } = 16;
+
+    public FontWeight FontWeight { get; private set => SetProperty(ref field, value); } = FontWeights.Normal;
+
+    public string FallbackFontFamilies { get; private set => SetProperty(ref field, value); } = string.Empty;
+
+    public double LineHeight { get; private set => SetProperty(ref field, value); } = 1;
+
+    public ColorScheme ColorScheme { get; private set => SetProperty(ref field, value); } = ColorScheme.Campbell;
+
+    public CursorShape CursorShape { get; private set => SetProperty(ref field, value); }
+
+    public bool CursorBlink { get; private set => SetProperty(ref field, value); }
+
+    public IntenseTextStyle IntenseTextStyle { get; private set => SetProperty(ref field, value); }
+
+    public bool UseBuiltinGlyphs { get; private set => SetProperty(ref field, value); }
+
+    public bool UseColorEmoji { get; private set => SetProperty(ref field, value); }
+
+    public bool CopyOnSelect { get; private set => SetProperty(ref field, value); }
+
+    public Thickness Padding { get; private set => SetProperty(ref field, value); }
+
+    public IReadOnlyList<TerminalKeyBinding> KeyBindings { get; private set => SetProperty(ref field, value); } = [];
+
+    /// <summary>The scheme's background at the configured opacity; the window backdrop shows through the rest.</summary>
+    public Brush Background { get; private set => SetProperty(ref field, value); } = Brushes.Black;
+
+    public ImageSource? BackgroundImage { get; private set => SetProperty(ref field, value); }
+
+    public double BackgroundImageOpacity { get; private set => SetProperty(ref field, value); }
+
+    public Stretch BackgroundImageStretch { get; private set => SetProperty(ref field, value); }
+
+    public HorizontalAlignment BackgroundImageHorizontalAlignment { get; private set => SetProperty(ref field, value); }
+
+    public VerticalAlignment BackgroundImageVerticalAlignment { get; private set => SetProperty(ref field, value); }
+
+    /// <summary>Resolves the options into WPF values; every pane bound to this instance updates.</summary>
+    public void Apply(TerminalOptions o)
     {
-        var o = options.Value;
         FontFamily = new FontFamily(o.FontFamily);
         FontSize = Math.Max(4, o.FontSize) * 96.0 / 72.0;
-        FontWeight = new FontWeightConverter().ConvertFromInvariantString(o.FontWeight) is FontWeight weight ? weight : FontWeights.Normal;
+        FontWeight = ParseWeight(o.FontWeight);
         FallbackFontFamilies = o.FallbackFontFamilies;
         LineHeight = o.LineHeight > 0 ? o.LineHeight : 1;
         ColorScheme = o.Schemes.Concat(ColorScheme.BuiltIn).FirstOrDefault(s => s.Name.Equals(o.ColorScheme, StringComparison.OrdinalIgnoreCase)) ?? ColorScheme.Campbell;
@@ -29,7 +77,7 @@ public sealed class TerminalAppearance
         UseBuiltinGlyphs = o.UseBuiltinGlyphs;
         UseColorEmoji = o.UseColorEmoji;
         CopyOnSelect = o.CopyOnSelect;
-        Padding = new ThicknessConverter().ConvertFromInvariantString(o.Padding) is Thickness padding ? padding : new Thickness(8, 4, 8, 4);
+        Padding = ParsePadding(o.Padding);
         KeyBindings = [.. o.SendKeys
             .Select(k => KeyChord.TryParse(k.Keys, out var chord) ? new TerminalKeyBinding(chord.Key, chord.Modifiers, k.Text) : null)
             .OfType<TerminalKeyBinding>()];
@@ -43,47 +91,29 @@ public sealed class TerminalAppearance
         (BackgroundImageHorizontalAlignment, BackgroundImageVerticalAlignment) = ParseAlignment(o.BackgroundImageAlignment);
     }
 
-    public FontFamily FontFamily { get; }
+    private static FontWeight ParseWeight(string value)
+    {
+        try
+        {
+            return new FontWeightConverter().ConvertFromInvariantString(value) is FontWeight weight ? weight : FontWeights.Normal;
+        }
+        catch (Exception ex) when (ex is FormatException or NotSupportedException or ArgumentException)
+        {
+            return FontWeights.Normal;
+        }
+    }
 
-    /// <summary>In device-independent pixels (the options use points, like Windows Terminal).</summary>
-    public double FontSize { get; }
-
-    public FontWeight FontWeight { get; }
-
-    public string FallbackFontFamilies { get; }
-
-    public double LineHeight { get; }
-
-    public ColorScheme ColorScheme { get; }
-
-    public CursorShape CursorShape { get; }
-
-    public bool CursorBlink { get; }
-
-    public IntenseTextStyle IntenseTextStyle { get; }
-
-    public bool UseBuiltinGlyphs { get; }
-
-    public bool UseColorEmoji { get; }
-
-    public bool CopyOnSelect { get; }
-
-    public Thickness Padding { get; }
-
-    public IReadOnlyList<TerminalKeyBinding> KeyBindings { get; }
-
-    /// <summary>The scheme's background at the configured opacity; the window backdrop shows through the rest.</summary>
-    public Brush Background { get; }
-
-    public ImageSource? BackgroundImage { get; }
-
-    public double BackgroundImageOpacity { get; }
-
-    public Stretch BackgroundImageStretch { get; }
-
-    public HorizontalAlignment BackgroundImageHorizontalAlignment { get; }
-
-    public VerticalAlignment BackgroundImageVerticalAlignment { get; }
+    private static Thickness ParsePadding(string value)
+    {
+        try
+        {
+            return new ThicknessConverter().ConvertFromInvariantString(value) is Thickness padding ? padding : new Thickness(8, 4, 8, 4);
+        }
+        catch (Exception ex) when (ex is FormatException or NotSupportedException or ArgumentException)
+        {
+            return new Thickness(8, 4, 8, 4);
+        }
+    }
 
     private static Brush Frozen(Brush brush)
     {
@@ -104,13 +134,21 @@ public sealed class TerminalAppearance
             return null;
         }
 
-        var image = new BitmapImage();
-        image.BeginInit();
-        image.CacheOption = BitmapCacheOption.OnLoad;
-        image.UriSource = new Uri(Path.GetFullPath(file));
-        image.EndInit();
-        image.Freeze();
-        return image;
+        try
+        {
+            var image = new BitmapImage();
+            image.BeginInit();
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            image.UriSource = new Uri(Path.GetFullPath(file));
+            image.EndInit();
+            image.Freeze();
+            return image;
+        }
+        catch (Exception ex) when (ex is NotSupportedException or IOException or UnauthorizedAccessException or UriFormatException)
+        {
+            // Not an image, or not readable: the terminals simply have no picture behind them.
+            return null;
+        }
     }
 
     private static (HorizontalAlignment, VerticalAlignment) ParseAlignment(string value)

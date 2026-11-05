@@ -16,11 +16,39 @@ namespace CCUI.App.Input;
 /// </summary>
 public static class KeyboardShortcuts
 {
+    private static readonly List<(KeyChord Chord, Action Action)> Bindings = [];
+    private static bool _handlerRegistered;
+
     public static void Register(IServiceProvider services)
     {
-        var options = services.GetRequiredService<IOptions<KeyBindingOptions>>().Value;
-        var shell = services.GetRequiredService<ShellViewModel>();
-        var logger = services.GetRequiredService<ILogger<App>>();
+        Reload(
+            services.GetRequiredService<IOptions<KeyBindingOptions>>().Value,
+            services.GetRequiredService<ShellViewModel>(),
+            services.GetRequiredService<ILogger<App>>());
+
+        if (_handlerRegistered)
+        {
+            return;
+        }
+
+        _handlerRegistered = true;
+        EventManager.RegisterClassHandler(typeof(Window), UIElement.PreviewKeyDownEvent, new KeyEventHandler((_, e) =>
+        {
+            foreach (var (chord, action) in Bindings)
+            {
+                if (chord.Matches(e))
+                {
+                    action();
+                    e.Handled = true;
+                    return;
+                }
+            }
+        }));
+    }
+
+    /// <summary>Replaces the bindings, e.g. after the settings changed.</summary>
+    public static void Reload(KeyBindingOptions options, ShellViewModel shell, ILogger logger)
+    {
         var bindings = new List<(KeyChord Chord, Action Action)>();
 
         void Add(string gesture, Action action)
@@ -47,18 +75,9 @@ public static class KeyboardShortcuts
         Add(options.ToggleSessionList, () => shell.ToggleSessionListCommand.Execute(null));
         Add(options.FocusSessionList, () => Main()?.FocusSessionList());
         Add(options.TileLayout, () => Main()?.Tile());
+        Add(options.OpenSettings, () => Main()?.ShowSettings());
 
-        EventManager.RegisterClassHandler(typeof(Window), UIElement.PreviewKeyDownEvent, new KeyEventHandler((_, e) =>
-        {
-            foreach (var (chord, action) in bindings)
-            {
-                if (chord.Matches(e))
-                {
-                    action();
-                    e.Handled = true;
-                    return;
-                }
-            }
-        }));
+        Bindings.Clear();
+        Bindings.AddRange(bindings);
     }
 }

@@ -22,6 +22,9 @@ public static class AppHost
 {
     public static string DataDirectory { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CCUI");
 
+    /// <summary>Personal overrides, written by the settings page and read after the shipped files.</summary>
+    public static string UserSettingsPath { get; } = Path.Combine(DataDirectory, "appsettings.user.json");
+
     public static IHost Build(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
@@ -30,7 +33,9 @@ public static class AppHost
             ContentRootPath = AppContext.BaseDirectory,
         });
 
-        builder.Configuration.AddJsonFile(Path.Combine(DataDirectory, "appsettings.user.json"), optional: true, reloadOnChange: false);
+        // Reloaded when the file changes, so the settings page (and a hand edit) applies while the app runs.
+        Directory.CreateDirectory(DataDirectory);
+        builder.Configuration.AddJsonFile(UserSettingsPath, optional: true, reloadOnChange: true);
         builder.Configuration.AddEnvironmentVariables("CCUI_");
         builder.Configuration.AddCommandLine(args);
 
@@ -73,6 +78,11 @@ public static class AppHost
         }
 
         services.AddSingleton<TerminalAppearance>();
+        services.AddSingleton<LiveSettings>();
+        services.AddSingleton<ISettingsSource, SettingsSource>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<SettingsWindow>();
+        services.AddSingleton<Func<SettingsWindow>>(sp => sp.GetRequiredService<SettingsWindow>);
         services.AddSingleton<ShellServices>();
         services.AddSingleton<ShellViewModel>();
         services.AddSingleton<MainWindow>();

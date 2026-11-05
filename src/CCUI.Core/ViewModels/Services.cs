@@ -5,6 +5,9 @@ public interface IDialogService
 {
     string? PickFolder(string title, string? initialDirectory);
 
+    /// <summary>Picks one file; <paramref name="filter"/> is in Windows' "Images|*.png;*.jpg|All files|*.*" form.</summary>
+    string? PickFile(string title, string filter, string? initialPath);
+
     bool Confirm(string title, string message);
 
     void ShowError(string title, string message);

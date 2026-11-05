@@ -59,6 +59,9 @@ public sealed class SessionListOptions
 
     /// <summary>How far before the last boot to look for sessions the reboot killed.</summary>
     public int RebootLookBackHours { get; set; } = 24;
+
+    /// <summary>Open a session with a single click instead of a double click.</summary>
+    public bool OpenOnClick { get; set; }
 }
 
 /// <summary>Terminal look and behaviour, mirroring Windows Terminal profile settings. Section "Terminal".</summary>

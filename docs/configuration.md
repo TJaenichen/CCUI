@@ -63,7 +63,8 @@ To use it for one run only, start CCUI with `--Claude:Arguments:0=--dangerously-
 - `PseudoConsole`: `Auto`, `Bundled` or `Inbox`.
 - `ContextWindowTokens`: denominator of the context-used percentage (use 1000000 for 1M-context models).
 
-**SessionList**: `MaxAgeDays`, `RefreshSeconds`, `RebootLookBackHours`.
+**SessionList**: `MaxAgeDays`, `RefreshSeconds`, `RebootLookBackHours`, and `OpenOnClick` to open a session with a
+single click instead of a double click (the click selects it either way).
 
 **Terminal**: the terminal look, with Windows Terminal's names and units.
 - `FontFamily`, `FontSize` (points), `FontWeight`, `FallbackFontFamilies`, `LineHeight`.

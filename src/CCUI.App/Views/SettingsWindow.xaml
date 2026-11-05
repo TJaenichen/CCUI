@@ -251,8 +251,11 @@
                     <ScrollViewer>
                         <StackPanel>
                             <TextBlock Style="{StaticResource SettingsTitleStyle}" Text="Session list" />
-                            <TextBlock Style="{StaticResource SettingsNoteStyle}" Text="Which past sessions are listed. Applies after a restart." />
+                            <TextBlock Style="{StaticResource SettingsNoteStyle}" Text="The list of past sessions. The click setting applies when you save; the rest after a restart." />
 
+                            <HeaderedContentControl Header="Open a session" Tag="The first click selects a session either way; this makes it open the session as well.">
+                                <CheckBox Content="With a single click instead of a double click" IsChecked="{Binding SessionList.OpenOnClick}" />
+                            </HeaderedContentControl>
                             <HeaderedContentControl Header="Show sessions from" Tag="Sessions older than this are not listed.">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBox Style="{StaticResource Narrow}" Width="60" Text="{Binding SessionList.MaxAgeDays}" />

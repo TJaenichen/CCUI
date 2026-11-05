@@ -59,6 +59,7 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         _appearance = appearance.Value;
         _updates = updates.Value;
         IsDemo = demo.Value.Enabled;
+        SessionList.OpenOnClick = _list.OpenOnClick;
         SessionList.OpenRequested += (_, item) => OpenSession(item);
         Panes.CollectionChanged += (_, _) => UpdateStatus();
     }

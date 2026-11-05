@@ -58,6 +58,7 @@ public sealed class SettingsWindowTests(WpfFixture wpf)
                 .Configure<TerminalOptions>(configuration.GetSection(TerminalOptions.Section))
                 .Configure<AppearanceOptions>(configuration.GetSection(AppearanceOptions.Section))
                 .Configure<KeyBindingOptions>(configuration.GetSection(KeyBindingOptions.Section))
+                .Configure<SessionListOptions>(configuration.GetSection(SessionListOptions.Section))
                 .AddSingleton<TerminalAppearance>()
                 .AddSingleton(TestShell.Create())
                 .AddSingleton<LiveSettings>()
@@ -67,13 +68,18 @@ public sealed class SettingsWindowTests(WpfFixture wpf)
             var look = services.GetRequiredService<TerminalAppearance>();
             Assert.Equal(16, look.FontSize);
 
+            var shell = services.GetRequiredService<CCUI.Core.ViewModels.ShellViewModel>();
+            Assert.False(shell.SessionList.OpenOnClick);
+
             memory.Set("Terminal:FontSize", "15");
             memory.Set("Terminal:ColorScheme", "Tango Dark");
+            memory.Set("SessionList:OpenOnClick", "true");
             configuration.Reload();
             await WpfFixture.Settle(300, cancel);
 
             Assert.Equal(20, look.FontSize);
             Assert.Equal("Tango Dark", look.ColorScheme.Name);
+            Assert.True(shell.SessionList.OpenOnClick);
         });
     }
 

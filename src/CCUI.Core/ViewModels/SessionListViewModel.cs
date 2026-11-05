@@ -97,6 +97,10 @@ public sealed partial class SessionListViewModel : ObservableObject
     [ObservableProperty]
     public partial SessionListItemViewModel? SelectedItem { get; set; }
 
+    /// <summary>A single click opens a session (the default is a double click); the view reads it.</summary>
+    [ObservableProperty]
+    public partial bool OpenOnClick { get; set; }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(KilledAtRebootText))]
     public partial int KilledAtRebootCount { get; set; }

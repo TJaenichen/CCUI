@@ -69,7 +69,8 @@
         </Style>
 
         <HierarchicalDataTemplate DataType="{x:Type vm:SessionListItemViewModel}" ItemsSource="{Binding Agents}">
-            <Grid ToolTip="{Binding ToolTip}" Background="Transparent">
+            <!-- A double click opens the session; with SessionList:OpenOnClick a single click does (see code-behind). -->
+            <Grid ToolTip="{Binding ToolTip}" Background="Transparent" MouseLeftButtonUp="OnItemMouseUp">
                 <Grid.InputBindings>
                     <MouseBinding Gesture="LeftDoubleClick"
                                   Command="{Binding DataContext.OpenSessionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"

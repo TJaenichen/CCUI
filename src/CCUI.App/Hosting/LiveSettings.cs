@@ -18,6 +18,7 @@ public sealed class LiveSettings(
     IOptionsMonitor<TerminalOptions> terminal,
     IOptionsMonitor<AppearanceOptions> appearance,
     IOptionsMonitor<KeyBindingOptions> keyBindings,
+    IOptionsMonitor<SessionListOptions> sessionList,
     TerminalAppearance look,
     ShellViewModel shell,
     ILogger<LiveSettings> logger) : IDisposable
@@ -30,6 +31,7 @@ public sealed class LiveSettings(
         Subscribe(terminal.OnChange((_, _) => Schedule()));
         Subscribe(appearance.OnChange((_, _) => Schedule()));
         Subscribe(keyBindings.OnChange((_, _) => Schedule()));
+        Subscribe(sessionList.OnChange((_, _) => Schedule()));
     }
 
     /// <summary>Pushes the current options into the running app.</summary>
@@ -46,6 +48,7 @@ public sealed class LiveSettings(
             look.Apply(terminal.CurrentValue);
             ThemeResources.Apply(app, appearance.CurrentValue, look);
             KeyboardShortcuts.Reload(keyBindings.CurrentValue, shell, logger);
+            shell.SessionList.OpenOnClick = sessionList.CurrentValue.OpenOnClick;
             foreach (Window window in app.Windows)
             {
                 if (window is MainWindow main)

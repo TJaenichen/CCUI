@@ -1,0 +1,23 @@
+<Window x:Class="CCUI.App.Views.InputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="420" SizeToContent="Height" ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#FF1E1E24"
+        FontFamily="{StaticResource UiFont}" FontSize="12.5"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="34" GlassFrameThickness="-1" ResizeBorderThickness="0" UseAeroCaptionButtons="True" CornerRadius="0" />
+    </WindowChrome.WindowChrome>
+    <StackPanel Margin="16,8,16,16">
+        <TextBlock x:Name="Caption" Height="26" VerticalAlignment="Top" FontWeight="SemiBold" Margin="0,0,140,0" />
+        <TextBlock x:Name="Label" Margin="0,4,0,6" Foreground="{StaticResource TextSecondaryBrush}" />
+        <TextBox x:Name="Input" Style="{StaticResource FormTextBoxStyle}" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Style="{StaticResource FormButtonStyle}" Content="Cancel" IsCancel="True" />
+            <Button Style="{StaticResource FormAccentButtonStyle}" Margin="8,0,0,0" Content="OK" IsDefault="True" Click="OnOk" />
+        </StackPanel>
+    </StackPanel>
+</Window>

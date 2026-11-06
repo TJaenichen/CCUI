@@ -4,6 +4,7 @@ using CCUI.App.Services;
 using CCUI.App.Views;
 using CCUI.Core.Claude;
 using CCUI.Core.Demo;
+using CCUI.Core.Folders;
 using CCUI.Core.Sessions;
 using CCUI.Core.Settings;
 using CCUI.Core.Threading;
@@ -68,6 +69,7 @@ public static class AppHost
 
         if (demo)
         {
+            services.AddSingleton<IFolderStore>(new MemoryFolderStore { Tree = DemoFolders.Create() });
             services.AddSingleton<ISessionCatalog, DemoSessionCatalog>();
             services.AddSingleton<ISessionLauncher, DemoSessionLauncher>();
             services.AddSingleton<IClaudeProcessProbe, NoClaudeProcesses>();
@@ -76,6 +78,7 @@ public static class AppHost
         else
         {
             services.AddSingleton<IAppUpdater, VelopackUpdater>();
+            services.AddSingleton<IFolderStore>(new FolderStore(Path.Combine(DataDirectory, "folders.json")));
             services.AddSingleton(_ => new HookEnvironment(Path.Combine(DataDirectory, "hooks"), Environment.ProcessPath!));
             services.AddSingleton<ISessionCatalog, SessionCatalog>();
             services.AddSingleton<ISessionLauncher, ClaudeSessionLauncher>();

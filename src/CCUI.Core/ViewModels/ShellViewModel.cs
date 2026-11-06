@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CCUI.Core.Claude;
+using CCUI.Core.Folders;
 using CCUI.Core.Sessions;
 using CCUI.Core.Settings;
 using CCUI.Core.Threading;
@@ -17,6 +18,7 @@ public sealed record ShellServices(
     ISessionLauncher Launcher,
     ISessionCatalog Catalog,
     IWorkspaceStore Workspace,
+    IFolderStore Folders,
     IUiDispatcher Dispatcher,
     IDialogService Dialogs,
     IClipboardService Clipboard,
@@ -59,12 +61,14 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         _appearance = appearance.Value;
         _updates = updates.Value;
         IsDemo = demo.Value.Enabled;
+        SessionList = new SessionListViewModel(services.Folders, services.Dialogs, services.Clipboard);
         SessionList.OpenOnClick = _list.OpenOnClick;
         SessionList.OpenRequested += (_, item) => OpenSession(item);
+        SessionList.NewSessionRequested += (_, folder) => NewSessionIn(folder);
         Panes.CollectionChanged += (_, _) => UpdateStatus();
     }
 
-    public SessionListViewModel SessionList { get; } = new();
+    public SessionListViewModel SessionList { get; }
 
     public ObservableCollection<SessionPaneViewModel> Panes { get; } = [];
 
@@ -246,6 +250,30 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         }
     }
 
+    /// <summary>Starts a session in a folder: in its working directory when it has one, else where the user picks, and places it there.</summary>
+    private void NewSessionIn(FolderViewModel folder)
+    {
+        var directory = folder.WorkingDirectory;
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            var start = ActivePane?.WorkingDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            directory = _services.Dialogs.PickFolder("Start a Claude session in '" + folder.Name + "'…", start);
+        }
+
+        if (directory is null)
+        {
+            return;
+        }
+
+        var pane = Launch(new SessionLaunchRequest(NewPaneId(), directory, ResumeSessionId: null), title: null);
+        if (folder.Id is { } id)
+        {
+            SessionList.Place(pane.SessionId, id);
+        }
+
+        ActivePane = pane;
+    }
+
     /// <summary>Opens (or activates) a session. Takes any parameter: tree rows can also be running agents.</summary>
     [RelayCommand]
     private void OpenSession(object? parameter)
@@ -407,11 +435,18 @@ public sealed partial class ShellViewModel : ObservableObject, IAsyncDisposable
         pane.CloseRequested += (_, _) => ClosePaneCommand.Execute(pane);
         pane.RestartRequested += (_, _) => Restart(pane);
         pane.ClipboardWriteRequested += (_, text) => _services.Clipboard.SetText(text);
+        var lastSessionId = pane.SessionId;
         pane.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(SessionPaneViewModel.Activity) or nameof(SessionPaneViewModel.NeedsAttention) or nameof(SessionPaneViewModel.HasExited))
             {
                 UpdateStatus();
+            }
+            else if (e.PropertyName == nameof(SessionPaneViewModel.SessionId))
+            {
+                // /clear gives the pane a new session id; its folder and pin follow.
+                SessionList.SessionIdChanged(lastSessionId, pane.SessionId);
+                lastSessionId = pane.SessionId;
             }
         };
 

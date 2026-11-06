@@ -152,6 +152,10 @@ public sealed class SettingsTests
 
         public string? PickFile(string title, string filter, string? initialPath) => null;
 
+        public string? Prompt(string title, string label, string? initial) => null;
+
+        public bool Open(string target) => false;
+
         public bool Confirm(string title, string message) => false;
 
         public void ShowError(string title, string message)

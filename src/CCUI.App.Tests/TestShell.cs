@@ -1,4 +1,5 @@
 using CCUI.Core.Claude;
+using CCUI.Core.Folders;
 using CCUI.Core.Sessions;
 using CCUI.Core.Settings;
 using CCUI.Core.Threading;
@@ -13,7 +14,7 @@ namespace CCUI.App.Tests;
 internal static class TestShell
 {
     public static ShellViewModel Create() => new(
-        new ShellServices(new NoLauncher(), new NoCatalog(), new NoStore(), new ImmediateDispatcher(), new NoDialogs(), new NoClipboard(), new NoClaudeProcesses(), new NoAppUpdater("0.0.0"), TimeProvider.System, NullLogger<ShellViewModel>.Instance),
+        new ShellServices(new NoLauncher(), new NoCatalog(), new NoStore(), new MemoryFolderStore(), new ImmediateDispatcher(), new NoDialogs(), new NoClipboard(), new NoClaudeProcesses(), new NoAppUpdater("0.0.0"), TimeProvider.System, NullLogger<ShellViewModel>.Instance),
         Options.Create(new ClaudeOptions()),
         Options.Create(new SessionListOptions()),
         Options.Create(new WorkspaceOptions { AutoSaveSeconds = 0 }),
@@ -45,6 +46,10 @@ internal static class TestShell
         public string? PickFolder(string title, string? initialDirectory) => null;
 
         public string? PickFile(string title, string filter, string? initialPath) => null;
+
+        public string? Prompt(string title, string label, string? initial) => null;
+
+        public bool Open(string target) => false;
 
         public bool Confirm(string title, string message) => false;
 

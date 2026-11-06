@@ -68,14 +68,145 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Menu items that make no sense on the implicit "Other" folder. -->
+        <Style x:Key="FolderOnlyItem" TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsOther}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="FolderOnlySeparator" TargetType="Separator" BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsOther}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- A folder: chevron, name, counts, and a vault mark when a vault folder applies. The row's Tag carries the
+             list view model so the context menu, which lives outside the visual tree, can reach its commands. -->
+        <HierarchicalDataTemplate DataType="{x:Type vm:FolderViewModel}" ItemsSource="{Binding Children}">
+            <Grid Background="Transparent" ToolTip="{Binding ToolTip}" Margin="-2,0,0,0"
+                  Tag="{Binding DataContext.SessionList, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <Grid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="New session here" Style="{StaticResource FolderOnlyItem}"
+                                  Command="{Binding PlacementTarget.Tag.NewSessionInCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <MenuItem Header="New subfolder" Style="{StaticResource FolderOnlyItem}"
+                                  Command="{Binding PlacementTarget.Tag.NewFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <MenuItem Header="New folder"
+                                  Command="{Binding PlacementTarget.Tag.NewFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                            <MenuItem.Style>
+                                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOther}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
+                        <Separator Style="{StaticResource FolderOnlySeparator}" />
+                        <MenuItem Header="Rename…" Style="{StaticResource FolderOnlyItem}"
+                                  Command="{Binding PlacementTarget.Tag.RenameFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <MenuItem Header="Delete folder" Style="{StaticResource FolderOnlyItem}"
+                                  Command="{Binding PlacementTarget.Tag.DeleteFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <Separator Style="{StaticResource FolderOnlySeparator}" />
+                        <MenuItem Header="Set working directory…" Style="{StaticResource FolderOnlyItem}" ToolTip="New sessions here start in it; unplaced sessions found under it show here."
+                                  Command="{Binding PlacementTarget.Tag.SetFolderDirectoryCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <MenuItem Header="Clear working directory" Style="{StaticResource FolderOnlyItem}" IsEnabled="{Binding HasWorkingDirectory}"
+                                  Command="{Binding PlacementTarget.Tag.ClearFolderDirectoryCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <Separator Style="{StaticResource FolderOnlySeparator}" />
+                        <MenuItem Header="Set vault folder…" Style="{StaticResource FolderOnlyItem}" ToolTip="An Obsidian vault, or a folder inside one, for this folder and everything below it."
+                                  Command="{Binding PlacementTarget.Tag.SetVaultFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <MenuItem Header="Clear vault folder" Style="{StaticResource FolderOnlyItem}" IsEnabled="{Binding HasOwnVaultFolder}"
+                                  Command="{Binding PlacementTarget.Tag.ClearVaultFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <MenuItem Header="Open vault folder" Style="{StaticResource FolderOnlyItem}" IsEnabled="{Binding HasVaultFolder}"
+                                  Command="{Binding PlacementTarget.Tag.OpenVaultFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                    </ContextMenu>
+                </Grid.ContextMenu>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ToggleButton Width="16" Height="16" Margin="0,0,2,0" Focusable="False" Cursor="Hand"
+                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=TreeViewItem}, Mode=TwoWay}">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border Background="Transparent">
+                                <TextBlock x:Name="Glyph" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource IconFont}" FontSize="9"
+                                           Foreground="{StaticResource TextMutedBrush}" Text="&#xE76C;" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Glyph" Property="Text" Value="&#xE70D;" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                </ToggleButton>
+                <TextBlock Grid.Column="1" Margin="0,0,6,0" VerticalAlignment="Center" FontFamily="{StaticResource IconFont}" FontSize="12"
+                           Foreground="{StaticResource TextSecondaryBrush}" Text="{StaticResource IconFolder}" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Margin="6,0,0,0" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="{Binding SessionCount}" />
+                </StackPanel>
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,2,0">
+                    <Border Style="{StaticResource ChipStyle}" Background="#3361AFEF" ToolTip="Working"
+                            Visibility="{Binding WorkingCount, Converter={StaticResource VisibleWhen}}">
+                        <TextBlock FontSize="10" Foreground="{StaticResource WorkingBrush}" Text="{Binding WorkingCount}" />
+                    </Border>
+                    <Border Style="{StaticResource ChipStyle}" Background="#33E5C07B" ToolTip="Needs you"
+                            Visibility="{Binding AttentionCount, Converter={StaticResource VisibleWhen}}">
+                        <TextBlock FontSize="10" Foreground="{StaticResource AttentionBrush}" Text="{Binding AttentionCount}" />
+                    </Border>
+                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontFamily="{StaticResource IconFont}" FontSize="11"
+                               Foreground="{StaticResource TextMutedBrush}" Text="&#xE8F1;" ToolTip="{Binding EffectiveVaultFolder}"
+                               Visibility="{Binding HasVaultFolder, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+            </Grid>
+        </HierarchicalDataTemplate>
+
         <HierarchicalDataTemplate DataType="{x:Type vm:SessionListItemViewModel}" ItemsSource="{Binding Agents}">
             <!-- A double click opens the session; with SessionList:OpenOnClick a single click does (see code-behind). -->
-            <Grid ToolTip="{Binding ToolTip}" Background="Transparent" MouseLeftButtonUp="OnItemMouseUp">
+            <Grid ToolTip="{Binding ToolTip}" Background="Transparent" MouseLeftButtonUp="OnItemMouseUp" ContextMenuOpening="OnSessionMenuOpening"
+                  Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <Grid.InputBindings>
                     <MouseBinding Gesture="LeftDoubleClick"
                                   Command="{Binding DataContext.OpenSessionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                   CommandParameter="{Binding}" />
                 </Grid.InputBindings>
+                <Grid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Open" FontWeight="SemiBold"
+                                  Command="{Binding PlacementTarget.Tag.OpenSessionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <MenuItem Command="{Binding PlacementTarget.Tag.SessionList.TogglePinCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}">
+                            <MenuItem.Style>
+                                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                    <Setter Property="Header" Value="Pin to top" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                            <Setter Property="Header" Value="Unpin" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
+                        <!-- Filled in by the code-behind with the folders of the moment. -->
+                        <MenuItem Header="Move to" Tag="move">
+                            <MenuItem Header="(no folders)" IsEnabled="False" />
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Header="Open folder in Explorer"
+                                  Command="{Binding PlacementTarget.Tag.SessionList.OpenSessionFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                        <MenuItem Header="Copy session id"
+                                  Command="{Binding PlacementTarget.Tag.SessionList.CopySessionIdCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                    </ContextMenu>
+                </Grid.ContextMenu>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -86,7 +217,11 @@
                     <controls:OrbitSpinner Style="{StaticResource ListSpinnerStyle}" />
                 </Grid>
                 <StackPanel Grid.Column="1">
-                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" FontSize="10" Margin="0,2,5,0" Foreground="{DynamicResource AccentBrush}" Text="&#xE718;"
+                                   ToolTip="Pinned" Visibility="{Binding IsPinned, Converter={StaticResource BoolToVisibility}}" />
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                         <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Project}" />
                         <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="{Binding Branch, StringFormat=' · ⎇ {0}', TargetNullValue=''}" TextTrimming="CharacterEllipsis" />
@@ -131,6 +266,9 @@
             <DockPanel DockPanel.Dock="Top" Margin="12,10,8,6">
                 <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="{StaticResource IconAdd}"
                         Command="{Binding NewSessionCommand}" ToolTip="New session (Ctrl+Shift+T)" />
+                <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Command="{Binding SessionList.NewFolderCommand}" ToolTip="New folder">
+                    <TextBlock Style="{StaticResource IconTextStyle}" Text="&#xE8F4;" />
+                </Button>
                 <TextBlock VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Text="SESSIONS" />
                 <TextBlock VerticalAlignment="Center" Margin="6,0,0,0" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="{Binding SessionList.Items.Count}" />
             </DockPanel>
@@ -150,7 +288,18 @@
                 </DockPanel>
             </Border>
 
-            <TreeView x:Name="Tree" ItemsSource="{Binding SessionList.Items}" Foreground="{StaticResource TextPrimaryBrush}">
+            <TreeView x:Name="Tree" ItemsSource="{Binding SessionList.Roots}" Foreground="{StaticResource TextPrimaryBrush}">
+                <TreeView.ItemContainerStyle>
+                    <!-- Folders remember whether they are open; sessions and agents have no such property and stay expanded. -->
+                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource SessionTreeItemStyle}">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay, FallbackValue=True}" />
+                    </Style>
+                </TreeView.ItemContainerStyle>
+                <TreeView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="New folder" Command="{Binding SessionList.NewFolderCommand}" />
+                    </ContextMenu>
+                </TreeView.ContextMenu>
                 <TreeView.InputBindings>
                     <KeyBinding Key="Enter" Command="{Binding OpenSessionCommand}" CommandParameter="{Binding SelectedItem, ElementName=Tree}" />
                 </TreeView.InputBindings>

@@ -8,6 +8,12 @@ public interface IDialogService
     /// <summary>Picks one file; <paramref name="filter"/> is in Windows' "Images|*.png;*.jpg|All files|*.*" form.</summary>
     string? PickFile(string title, string filter, string? initialPath);
 
+    /// <summary>Asks for one line of text; null when cancelled.</summary>
+    string? Prompt(string title, string label, string? initial);
+
+    /// <summary>Opens a file, folder or URI with whatever handles it; false when nothing could.</summary>
+    bool Open(string target);
+
     bool Confirm(string title, string message);
 
     void ShowError(string title, string message);

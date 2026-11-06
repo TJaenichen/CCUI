@@ -1,4 +1,5 @@
 using CCUI.Core.Claude;
+using CCUI.Core.Folders;
 using CCUI.Core.Sessions;
 using CCUI.Core.Settings;
 using CCUI.Core.Tests.Fixtures;
@@ -425,7 +426,7 @@ public sealed class ViewModelTests
     }
 
     private ShellViewModel Shell(IAppUpdater? updater = null) => new(
-        new ShellServices(_launcher, new EmptyCatalog(), _store, new ImmediateDispatcher(), _dialogs, new NullClipboard(), new NoClaudeProcesses(), updater ?? new NoAppUpdater("0.1.0"), _time, NullLogger<ShellViewModel>.Instance),
+        new ShellServices(_launcher, new EmptyCatalog(), _store, new MemoryFolderStore(), new ImmediateDispatcher(), _dialogs, new NullClipboard(), new NoClaudeProcesses(), updater ?? new NoAppUpdater("0.1.0"), _time, NullLogger<ShellViewModel>.Instance),
         Options.Create(new ClaudeOptions()),
         Options.Create(new SessionListOptions()),
         Options.Create(new WorkspaceOptions { LaunchStaggerMilliseconds = 0, AutoSaveSeconds = 0 }),
@@ -546,6 +547,10 @@ public sealed class ViewModelTests
         public string? PickFolder(string title, string? initialDirectory) => Folder;
 
         public string? PickFile(string title, string filter, string? initialPath) => null;
+
+        public string? Prompt(string title, string label, string? initial) => null;
+
+        public bool Open(string target) => false;
 
         public bool Confirm(string title, string message)
         {

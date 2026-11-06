@@ -156,6 +156,10 @@ public sealed partial class FolderViewModel : ObservableObject
             EffectiveVaultFolder is { Length: > 0 } vault ? "Vault: " + vault : null,
         }.Where(s => s is not null));
 
+    /// <summary>Every folder below this one, subfolders of subfolders included.</summary>
+    public IEnumerable<FolderViewModel> AllFolders() =>
+        Children.OfType<FolderViewModel>().SelectMany(f => f.AllFolders().Prepend(f));
+
     /// <summary>Every session below this folder, subfolders included.</summary>
     public IEnumerable<SessionListItemViewModel> AllSessions() =>
         Children.SelectMany(c => c switch

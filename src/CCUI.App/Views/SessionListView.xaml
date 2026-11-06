@@ -88,7 +88,9 @@
              list view model so the context menu, which lives outside the visual tree, can reach its commands. -->
         <HierarchicalDataTemplate DataType="{x:Type vm:FolderViewModel}" ItemsSource="{Binding Children}">
             <Grid Background="Transparent" ToolTip="{Binding ToolTip}" Margin="-2,0,0,0"
-                  Tag="{Binding DataContext.SessionList, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                  Tag="{Binding DataContext.SessionList, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                  PreviewMouseLeftButtonDown="OnRowMouseDown" PreviewMouseMove="OnRowMouseMove"
+                  AllowDrop="True" DragOver="OnFolderDragOver" DragLeave="OnFolderDragLeave" Drop="OnFolderDrop">
                 <Grid.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="New session here" Style="{StaticResource FolderOnlyItem}"
@@ -174,6 +176,7 @@
         <HierarchicalDataTemplate DataType="{x:Type vm:SessionListItemViewModel}" ItemsSource="{Binding Agents}">
             <!-- A double click opens the session; with SessionList:OpenOnClick a single click does (see code-behind). -->
             <Grid ToolTip="{Binding ToolTip}" Background="Transparent" MouseLeftButtonUp="OnItemMouseUp" ContextMenuOpening="OnSessionMenuOpening"
+                  PreviewMouseLeftButtonDown="OnRowMouseDown" PreviewMouseMove="OnRowMouseMove"
                   Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <Grid.InputBindings>
                     <MouseBinding Gesture="LeftDoubleClick"
@@ -288,7 +291,9 @@
                 </DockPanel>
             </Border>
 
-            <TreeView x:Name="Tree" ItemsSource="{Binding SessionList.Roots}" Foreground="{StaticResource TextPrimaryBrush}">
+            <!-- Rows can be dragged onto folders; dropping on empty space takes a session or folder out of its folder. -->
+            <TreeView x:Name="Tree" ItemsSource="{Binding SessionList.Roots}" Foreground="{StaticResource TextPrimaryBrush}"
+                      AllowDrop="True" DragOver="OnTreeDragOver" Drop="OnTreeDrop">
                 <TreeView.ItemContainerStyle>
                     <!-- Folders remember whether they are open; sessions and agents have no such property and stay expanded. -->
                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource SessionTreeItemStyle}">

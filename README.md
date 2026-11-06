@@ -38,6 +38,11 @@ window.
 - **Subagents.** Running subagents appear under their session in the list and drive the activity meters.
 - **Session list.** Every recent session on the machine, newest first and filterable; open or resume any of them.
   Sessions killed by a reboot are flagged with a one-click "Reopen".
+- **Folders.** Arrange sessions in a tree of folders of your own: right-click to start a session in a folder, add
+  subfolders, rename, pin sessions to the top, and drag sessions and folders around. A folder can have a working
+  directory, which new sessions start in and which gathers unplaced sessions from under it, and a vault folder (an
+  Obsidian vault, or a folder inside one) that applies to everything below it and opens in Obsidian with one click.
+  The tree is saved in `%LOCALAPPDATA%\CCUI\folders.json`.
 - **Follows Claude Code.** `/clear` and `/compact` are understood, `/rename` titles show up, a cancelled turn
   reads as cancelled, and sessions are always resumed by full session id.
 

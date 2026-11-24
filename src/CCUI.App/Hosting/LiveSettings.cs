@@ -54,6 +54,7 @@ public sealed class LiveSettings(
                 if (window is MainWindow main)
                 {
                     main.ApplyBackdrop(appearance.CurrentValue.Backdrop);
+                    main.ApplyAppearance(appearance.CurrentValue);
                 }
             }
 

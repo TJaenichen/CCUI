@@ -161,10 +161,36 @@ public sealed class AppearanceOptions
     public int MeterPeakHoldMilliseconds { get; set; } = 900;
 
     /// <summary>
-    /// Decorative animation (the working spinner): On, Off, or System to follow Windows' "Show animations". System
-    /// is not the default because Remote Desktop sessions report animations as off.
+    /// Decorative animation (the working spinner, the mesh): On, Off, or System to follow Windows' "Show animations".
+    /// System is not the default because Remote Desktop sessions report animations as off.
     /// </summary>
     public string Animations { get; set; } = "On";
+
+    /// <summary>The animated mesh behind the terminals.</summary>
+    public MeshBackgroundOptions Mesh { get; set; } = new();
+}
+
+/// <summary>A slowly deforming dotted landscape behind the terminals. Section "Appearance:Mesh".</summary>
+public sealed class MeshBackgroundOptions
+{
+    public bool Enabled { get; set; }
+
+    /// <summary>How visible it is, 0 to 1.</summary>
+    public double Strength { get; set; } = 0.6;
+
+    /// <summary>Time multiplier: 1 is a slow drift already, 0.05 barely moves, 0 freezes it.</summary>
+    public double Speed { get; set; } = 1;
+
+    /// <summary>The two face colours; the swell mixes between them.</summary>
+    public string PrimaryColor { get; set; } = "#FF3B5C";
+
+    public string SecondaryColor { get; set; } = "#3BB3FF";
+
+    /// <summary>Grid points across the far edge of the plane, 8 to 240.</summary>
+    public int Columns { get; set; } = 120;
+
+    /// <summary>Frames per second, 1 to 120. Fewer costs less.</summary>
+    public int FrameRate { get; set; } = 30;
 }
 
 /// <summary>App-level shortcuts as WPF key gestures. Section "KeyBindings".</summary>

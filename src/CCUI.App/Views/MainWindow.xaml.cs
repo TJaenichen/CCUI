@@ -5,6 +5,7 @@ using System.Windows.Media;
 using AvalonDock.Controls;
 using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
+using CCUI.App.Hosting;
 using CCUI.App.Plugins;
 using CCUI.App.Services;
 using CCUI.Core.Claude;
@@ -47,6 +48,7 @@ public partial class MainWindow : Window
         DataContext = shell;
         TopPanels.ItemsSource = plugins.TopPanels;
         BottomPanels.ItemsSource = plugins.BottomPanels;
+        ApplyAppearance(appearance.Value);
         _saved = workspace.Value.RestoreOnStartup && !shell.IsDemo ? store.Load() : null;
         ApplyPlacement(_saved?.Window);
 
@@ -102,6 +104,26 @@ public partial class MainWindow : Window
         _settings.Owner = this;
         _settings.Closed += (_, _) => _settings = null;
         _settings.Show();
+    }
+
+    /// <summary>Applies the window-level appearance settings that do not need the window handle: the animated mesh.
+    /// Called at start and again when the settings change.</summary>
+    public void ApplyAppearance(AppearanceOptions appearance)
+    {
+        var mesh = appearance.Mesh;
+        Mesh.Strength = mesh.Strength;
+        Mesh.Speed = mesh.Speed;
+        Mesh.Columns = mesh.Columns;
+        Mesh.FrameRate = mesh.FrameRate;
+        Mesh.PrimaryColor = ThemeResources.ParseColor(mesh.PrimaryColor, Color.FromRgb(0xFF, 0x3B, 0x5C));
+        Mesh.SecondaryColor = ThemeResources.ParseColor(mesh.SecondaryColor, Color.FromRgb(0x3B, 0xB3, 0xFF));
+        Mesh.IsAnimated = appearance.Animations.Trim().ToUpperInvariant() switch
+        {
+            "OFF" => false,
+            "SYSTEM" => SystemParameters.ClientAreaAnimation,
+            _ => true,
+        };
+        Mesh.Visibility = mesh.Enabled ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>Applies the configured backdrop; called at start and again when the setting changes.</summary>

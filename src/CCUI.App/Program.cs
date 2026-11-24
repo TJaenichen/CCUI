@@ -30,6 +30,9 @@ public static class Program
 
         var app = new App();
         app.InitializeComponent();
+        // An exception off the UI thread ends the process; leave a trace next to the settings so it can be reported.
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            File.AppendAllText(Path.Combine(AppHost.DataDirectory, "crash.log"), $"{DateTimeOffset.Now:O} {e.ExceptionObject}{Environment.NewLine}{Environment.NewLine}");
 
         using var host = AppHost.Build(args);
         host.Start();

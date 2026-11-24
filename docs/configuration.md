@@ -78,8 +78,15 @@ single click instead of a double click (the click selects it either way).
 
 **Appearance**: `Backdrop` (Acrylic, Mica, MicaAlt, None; Windows 11), `WindowTint` (#AARRGGBB over the
 backdrop), `AccentColor`, `FocusBorderColor`, `FocusBorderThickness`, `MeterDecayMilliseconds`,
-`MeterPeakHoldMilliseconds`, `Animations` (the working spinner: `On`, `Off`, or `System` to follow Windows' "Show
-animations"; not the default because Remote Desktop sessions report animations as off).
+`MeterPeakHoldMilliseconds`, `Animations` (the working spinner and the mesh: `On`, `Off`, or `System` to follow
+Windows' "Show animations"; not the default because Remote Desktop sessions report animations as off).
+
+`Appearance:Mesh` is an optional animated background: a dotted landscape in perspective behind the whole window,
+lifted by a slowly wandering swell with translucent coloured faces where it rises. `Enabled` (off by default),
+`Strength` (0 to 1), `Speed` (1 is a slow drift already, 0.05 barely moves, 0 freezes it; any positive number
+works), `PrimaryColor` and `SecondaryColor` for the faces, `Columns` (grid points across the plane, 8 to 240) and
+`FrameRate` (1 to 120). It is drawn once behind everything, so the terminals' `Opacity` decides how much of it shows
+through, and it only renders while the window is visible and not minimised.
 
 **KeyBindings**: `FocusLeft/Right/Up/Down` (Alt+Arrows), `ToggleDetail` (Ctrl+Shift+D), `NewSession`
 (Ctrl+Shift+T), `CloseSession` (Ctrl+Shift+W), `ToggleSessionList` (Ctrl+Shift+B), `FocusSessionList`

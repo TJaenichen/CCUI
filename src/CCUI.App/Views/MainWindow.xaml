@@ -86,6 +86,9 @@
             <Rectangle Grid.Row="1" Fill="{DynamicResource WindowTintBrush}" />
         </Grid>
 
+        <!-- The optional animated mesh (Appearance:Mesh), over the tint and under everything else; configured in code-behind. -->
+        <controls:MeshBackground x:Name="Mesh" Margin="0,38,0,0" Visibility="Collapsed" />
+
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="38" />

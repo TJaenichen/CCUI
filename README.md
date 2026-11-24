@@ -55,6 +55,8 @@ window.
 - **Transparency and backdrops.** Acrylic, Mica or Mica Alt behind the whole window (Windows 11), a tint over
   it, and per-terminal opacity.
 - **Background images.** Any image behind the terminals, with opacity, stretch and alignment settings.
+- **An animated mesh.** Optionally, a dotted landscape in perspective behind the whole window, lifted by a slow
+  swell with translucent coloured faces. Strength, speed (down to barely moving), colours and detail are settings.
 - **Windows Terminal colour schemes.** Built-in schemes, or paste your own from Windows Terminal's
   `settings.json`; the format is the same.
 - **Fonts and cursor.** Font family, size, weight, fallback fonts, line height, cursor shape and blink, bold

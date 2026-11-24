@@ -30,18 +30,19 @@ public sealed class MeshBackgroundTests(WpfFixture wpf)
     {
         var rasterizer = new MeshRasterizer();
         var frame = new MeshFrame(1280, 800, 12.5, 1, 120, (0xFF, 0x3B, 0x5C), (0x3B, 0xB3, 0xFF));
-        rasterizer.Render(frame); // warm up: allocations and JIT
+        var pixels = new byte[1280 * 800 * 4];
+        rasterizer.Render(frame, pixels); // warm up: allocations and JIT
         var watch = Stopwatch.StartNew();
         for (var i = 0; i < 5; i++)
         {
-            rasterizer.Render(frame with { Time = 12.5 + i });
+            rasterizer.Render(frame with { Time = 12.5 + i }, pixels);
         }
 
         var perFrame = watch.Elapsed.TotalMilliseconds / 5;
         Directory.CreateDirectory(WpfFixture.SnapshotDirectory);
         File.WriteAllText(Path.Combine(WpfFixture.SnapshotDirectory, "mesh-frame-ms.txt"), perFrame.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture));
         Assert.True(perFrame < 150, $"a frame took {perFrame:0} ms"); // about 3x slower in Debug than in Release
-        Assert.Contains(rasterizer.Pixels, b => b != 0);
+        Assert.Contains(pixels, b => b != 0);
     }
 
     [Fact]

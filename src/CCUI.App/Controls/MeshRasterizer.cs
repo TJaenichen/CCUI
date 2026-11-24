@@ -49,20 +49,17 @@ internal sealed class MeshRasterizer
         return (Amplitude * envelope * waves) + ripple;
     }
 
-    public void Render(MeshFrame frame)
+    /// <summary>Draws the frame into <paramref name="pixels"/>, which must hold Width * Height * 4 bytes; the caller
+    /// owns the buffers so it can double-buffer between threads.</summary>
+    public void Render(MeshFrame frame, byte[] pixels)
     {
         var width = Math.Max(1, frame.Width);
         var height = Math.Max(1, frame.Height);
-        if (width != Width || height != Height)
-        {
-            Width = width;
-            Height = height;
-            Pixels = new byte[width * height * 4];
-        }
-        else
-        {
-            Array.Clear(Pixels);
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThan(pixels.Length, width * height * 4);
+        Width = width;
+        Height = height;
+        Pixels = pixels;
+        Array.Clear(pixels, 0, width * height * 4);
 
         var strength = Math.Clamp(frame.Strength, 0, 1);
         if (strength <= 0 || width < 20 || height < 20)
